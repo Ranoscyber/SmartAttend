@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "274652345265",
+    "firebase_url": "https://smartattend-aa5a4-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "smartattend-aa5a4",
+    "storage_bucket": "smartattend-aa5a4.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:274652345265:android:765eb10a3e275a8b774390",
+        "android_client_info": {
+          "package_name": "com.example.smartattend"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDw6Fr2LX0s6ZfdGsBqmwEER2G_lAVcBsM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
