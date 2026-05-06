@@ -3,7 +3,6 @@ package com.example.smartattend.ui.admin
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -13,16 +12,13 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AddAPhoto
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -39,6 +35,7 @@ fun AddHrScreen(
     onBack: () -> Unit,
     onHrCreated: () -> Unit
 ) {
+    val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
 
     var fullName by remember { mutableStateOf("") }
@@ -64,7 +61,7 @@ fun AddHrScreen(
 
         if (!message.isNullOrBlank()) {
             snackbarHostState.showSnackbar(message)
-            delay(1600)
+            delay(1500)
             viewModel.resetCreateHrState()
             onHrCreated()
         }
@@ -84,21 +81,18 @@ fun AddHrScreen(
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            text = "SmartAttend Admin",
+                            text = "Admin Panel",
                             fontSize = 12.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 },
                 navigationIcon = {
-                    IconButton(
+                    TextButton(
                         onClick = onBack,
                         enabled = !uiState.isLoading
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.ArrowBack,
-                            contentDescription = "Back"
-                        )
+                        Text("‹", fontSize = 30.sp)
                     }
                 }
             )
@@ -112,7 +106,7 @@ fun AddHrScreen(
                 .padding(paddingValues)
                 .navigationBarsPadding()
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp, vertical = 20.dp)
+                .padding(horizontal = 20.dp, vertical = 18.dp)
         ) {
             Text(
                 text = "HR Account Setup",
@@ -121,9 +115,10 @@ fun AddHrScreen(
             )
 
             Text(
-                text = "Create a login account for HR. Profile photo is optional.",
+                text = "Create a new HR account. Profile photo is optional.",
                 modifier = Modifier.padding(top = 6.dp),
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontSize = 14.sp
             )
 
             Spacer(modifier = Modifier.height(22.dp))
@@ -131,7 +126,10 @@ fun AddHrScreen(
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(28.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 5.dp)
+                elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                )
             ) {
                 Column(
                     modifier = Modifier.padding(22.dp),
@@ -144,15 +142,15 @@ fun AddHrScreen(
                         }
                     )
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(10.dp))
 
                     Text(
-                        text = "Tap image to choose HR photo",
+                        text = "Optional profile photo",
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontSize = 13.sp
                     )
 
-                    Spacer(modifier = Modifier.height(26.dp))
+                    Spacer(modifier = Modifier.height(24.dp))
 
                     OutlinedTextField(
                         value = fullName,
@@ -213,7 +211,7 @@ fun AddHrScreen(
                     )
 
                     Text(
-                        text = "Password must be at least 6 characters.",
+                        text = "Minimum 6 characters",
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(top = 8.dp),
@@ -224,16 +222,16 @@ fun AddHrScreen(
                     uiState.errorMessage?.let {
                         Spacer(modifier = Modifier.height(16.dp))
 
-                        Card(
-                            colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.errorContainer
-                            ),
-                            shape = RoundedCornerShape(16.dp)
+                        Surface(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(16.dp),
+                            color = MaterialTheme.colorScheme.errorContainer
                         ) {
                             Text(
                                 text = it,
                                 modifier = Modifier.padding(14.dp),
-                                color = MaterialTheme.colorScheme.onErrorContainer
+                                color = MaterialTheme.colorScheme.onErrorContainer,
+                                fontSize = 14.sp
                             )
                         }
                     }
@@ -243,6 +241,7 @@ fun AddHrScreen(
                     Button(
                         onClick = {
                             viewModel.createHr(
+                                context = context,
                                 fullName = fullName,
                                 email = email,
                                 password = password,
@@ -286,22 +285,6 @@ fun AddHrScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(20.dp))
-
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(22.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer
-                )
-            ) {
-                Text(
-                    text = "Note: If no photo is selected, HR will see a default gray avatar. HR can request profile updates later.",
-                    modifier = Modifier.padding(18.dp),
-                    color = MaterialTheme.colorScheme.onPrimaryContainer
-                )
-            }
-
             Spacer(modifier = Modifier.height(24.dp))
         }
     }
@@ -314,7 +297,7 @@ private fun ProfileImagePicker(
 ) {
     Box(
         modifier = Modifier
-            .size(118.dp)
+            .size(116.dp)
             .clip(CircleShape)
             .background(MaterialTheme.colorScheme.surfaceVariant)
             .border(
@@ -335,11 +318,10 @@ private fun ProfileImagePicker(
                 contentScale = ContentScale.Crop
             )
         } else {
-            Icon(
-                imageVector = Icons.Default.Person,
-                contentDescription = "Default Profile",
-                modifier = Modifier.size(58.dp),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.55f)
+            Text(
+                text = "👤",
+                fontSize = 48.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
 
@@ -351,11 +333,11 @@ private fun ProfileImagePicker(
             color = MaterialTheme.colorScheme.primary
         ) {
             Box(contentAlignment = Alignment.Center) {
-                Icon(
-                    imageVector = Icons.Default.AddAPhoto,
-                    contentDescription = "Choose Image",
-                    tint = MaterialTheme.colorScheme.onPrimary,
-                    modifier = Modifier.size(20.dp)
+                Text(
+                    text = "+",
+                    color = MaterialTheme.colorScheme.onPrimary,
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold
                 )
             }
         }

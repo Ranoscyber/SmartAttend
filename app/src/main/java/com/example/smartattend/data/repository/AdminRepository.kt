@@ -1,20 +1,21 @@
 package com.example.smartattend.data.repository
 
+import android.content.Context
 import android.net.Uri
 import com.example.smartattend.data.model.AppUser
 import com.example.smartattend.data.model.HRProfile
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
-import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.tasks.await
 
 class AdminRepository {
 
     private val auth = FirebaseAuth.getInstance()
     private val database = FirebaseDatabase.getInstance().reference
-    private val storage = FirebaseStorage.getInstance().reference
+    private val cloudinaryUploadRepository = CloudinaryUploadRepository()
 
     suspend fun createHrAccount(
+        context: Context,
         fullName: String,
         email: String,
         password: String,
@@ -30,7 +31,14 @@ class AdminRepository {
                 ?: return Result.failure(Exception("Failed to get HR UID"))
 
             val photoUrl = if (imageUri != null) {
-                uploadHrProfileImage(hrUid, imageUri)
+                val uploadResult = cloudinaryUploadRepository.uploadImage(
+                    context = context,
+                    imageUri = imageUri
+                )
+
+                uploadResult.getOrElse { error ->
+                    return Result.failure(error)
+                }
             } else {
                 ""
             }
@@ -73,17 +81,6 @@ class AdminRepository {
         } catch (e: Exception) {
             Result.failure(e)
         }
-    }
-
-    private suspend fun uploadHrProfileImage(
-        hrUid: String,
-        imageUri: Uri
-    ): String {
-        val imageRef = storage.child("hr_profiles/$hrUid/profile.jpg")
-
-        imageRef.putFile(imageUri).await()
-
-        return imageRef.downloadUrl.await().toString()
     }
 
     suspend fun getHrCount(): Result<Int> {

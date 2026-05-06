@@ -3,51 +3,60 @@ package com.example.smartattend.ui.theme
 import android.app.Activity
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalView
+import androidx.core.view.WindowCompat
 
-private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80
-)
-
-private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
-
-    /* Other default colors to override
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
+private val SmartAttendLightColorScheme = lightColorScheme(
+    primary = Color(0xFF1565D8),
     onPrimary = Color.White,
+
+    primaryContainer = Color(0xFFDCEBFF),
+    onPrimaryContainer = Color(0xFF0B3D91),
+
+    secondary = Color(0xFF4F6F9F),
     onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-    */
+
+    secondaryContainer = Color(0xFFE6EEFF),
+    onSecondaryContainer = Color(0xFF1B2E59),
+
+    background = Color(0xFFF5F7FB),
+    onBackground = Color(0xFF111827),
+
+    surface = Color.White,
+    onSurface = Color(0xFF111827),
+
+    surfaceVariant = Color(0xFFF5F7FB),
+    onSurfaceVariant = Color(0xFF6B7280),
+
+    error = Color(0xFFDC2626),
+    onError = Color.White,
+
+    errorContainer = Color(0xFFFFE4E6),
+    onErrorContainer = Color(0xFF7F1D1D)
 )
 
 @Composable
 fun SmartAttendTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
+    darkTheme: Boolean = false,
+    dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
-    val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        }
+    val colorScheme: ColorScheme = SmartAttendLightColorScheme
 
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
+    val view = LocalView.current
+
+    if (!view.isInEditMode) {
+        val window = (view.context as Activity).window
+        window.statusBarColor = Color(0xFFF5F7FB).hashCode()
+        window.navigationBarColor = Color(0xFFF5F7FB).hashCode()
+
+        WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = true
+        WindowCompat.getInsetsController(window, view).isAppearanceLightNavigationBars = true
     }
 
     MaterialTheme(

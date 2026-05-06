@@ -1,5 +1,6 @@
 package com.example.smartattend.viewmodel
 
+import android.content.Context
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -41,6 +42,7 @@ class AdminViewModel(
     }
 
     fun createHr(
+        context: Context,
         fullName: String,
         email: String,
         password: String,
@@ -71,6 +73,7 @@ class AdminViewModel(
             _uiState.value = AdminUiState(isLoading = true)
 
             val result = adminRepository.createHrAccount(
+                context = context,
                 fullName = cleanName,
                 email = cleanEmail,
                 password = cleanPassword,

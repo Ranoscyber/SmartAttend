@@ -5,13 +5,14 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.*
 import com.example.smartattend.ui.admin.AddHrScreen
-import com.example.smartattend.ui.admin.AdminDashboardScreen
+import com.example.smartattend.ui.admin.AdminRootScreen
 import com.example.smartattend.ui.auth.ForgotPasswordScreen
 import com.example.smartattend.ui.auth.LoginScreen
 import com.example.smartattend.ui.employee.EmployeeHomeScreen
-import com.example.smartattend.ui.hr.HrDashboardScreen
+import com.example.smartattend.ui.hr.HrRootScreen
 import com.example.smartattend.viewmodel.AdminViewModel
 import com.example.smartattend.viewmodel.AuthViewModel
+import com.example.smartattend.viewmodel.HrViewModel
 
 @Composable
 fun AppNavGraph() {
@@ -19,6 +20,7 @@ fun AppNavGraph() {
 
     val authViewModel: AuthViewModel = viewModel()
     val adminViewModel: AdminViewModel = viewModel()
+    val hrViewModel: HrViewModel = viewModel()
 
     NavHost(
         navController = navController,
@@ -63,7 +65,7 @@ fun AppNavGraph() {
         }
 
         composable(Routes.ADMIN_DASHBOARD) {
-            AdminDashboardScreen(
+            AdminRootScreen(
                 viewModel = adminViewModel,
                 onAddHrClick = {
                     navController.navigate(Routes.ADD_HR)
@@ -93,7 +95,16 @@ fun AppNavGraph() {
         }
 
         composable(Routes.HR_DASHBOARD) {
-            HrDashboardScreen()
+            HrRootScreen(
+                viewModel = hrViewModel,
+                onLogoutClick = {
+                    authViewModel.logout()
+
+                    navController.navigate(Routes.LOGIN) {
+                        popUpTo(Routes.HR_DASHBOARD) { inclusive = true }
+                    }
+                }
+            )
         }
 
         composable(Routes.EMPLOYEE_HOME) {

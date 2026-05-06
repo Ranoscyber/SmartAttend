@@ -16,8 +16,7 @@ import com.example.smartattend.viewmodel.AdminViewModel
 @Composable
 fun AdminDashboardScreen(
     viewModel: AdminViewModel,
-    onAddHrClick: () -> Unit,
-    onLogoutClick: () -> Unit
+    onAddHrClick: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -29,41 +28,41 @@ fun AdminDashboardScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.surfaceVariant)
-            .padding(20.dp)
+            .statusBarsPadding()
+            .padding(horizontal = 20.dp, vertical = 18.dp)
     ) {
-        AdminTopBar(
-            onLogoutClick = onLogoutClick
-        )
+        AdminHeader()
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(26.dp))
 
         Text(
-            text = "Admin Dashboard",
-            fontSize = 28.sp,
+            text = "Overview",
+            fontSize = 30.sp,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurface
         )
 
         Text(
-            text = "Manage HR accounts, employees, and system access.",
+            text = "Manage HR accounts and system access.",
             modifier = Modifier.padding(top = 6.dp),
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            fontSize = 14.sp
         )
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(22.dp))
 
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            DashboardCard(
+            AdminStatCard(
                 title = "Total HR",
                 value = uiState.totalHr.toString(),
                 emoji = "👥",
                 modifier = Modifier.weight(1f)
             )
 
-            DashboardCard(
+            AdminStatCard(
                 title = "Employees",
                 value = uiState.totalEmployees.toString(),
                 emoji = "🧑‍💼",
@@ -75,22 +74,27 @@ fun AdminDashboardScreen(
 
         Card(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(24.dp),
-            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+            shape = RoundedCornerShape(26.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 5.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.primary
+            )
         ) {
             Column(
-                modifier = Modifier.padding(20.dp)
+                modifier = Modifier.padding(22.dp)
             ) {
                 Text(
-                    text = "Quick Actions",
+                    text = "SmartAttend Admin",
+                    color = MaterialTheme.colorScheme.onPrimary,
                     fontWeight = FontWeight.Bold,
-                    fontSize = 20.sp
+                    fontSize = 22.sp
                 )
 
                 Text(
-                    text = "Create HR accounts and manage system users.",
-                    modifier = Modifier.padding(top = 6.dp),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    text = "Create HR accounts, manage access, and monitor organization activity.",
+                    modifier = Modifier.padding(top = 8.dp),
+                    color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.86f),
+                    fontSize = 14.sp
                 )
 
                 Spacer(modifier = Modifier.height(18.dp))
@@ -100,24 +104,17 @@ fun AdminDashboardScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(54.dp),
-                    shape = RoundedCornerShape(16.dp)
+                    shape = RoundedCornerShape(18.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.surface,
+                        contentColor = MaterialTheme.colorScheme.primary
+                    )
                 ) {
                     Text(
                         text = "Create HR Account",
-                        fontSize = 16.sp
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.SemiBold
                     )
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                OutlinedButton(
-                    onClick = { },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(54.dp),
-                    shape = RoundedCornerShape(16.dp)
-                ) {
-                    Text("View HR List")
                 }
             }
         }
@@ -126,41 +123,48 @@ fun AdminDashboardScreen(
 
         Card(
             modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.primary
-            ),
-            shape = RoundedCornerShape(24.dp)
+            shape = RoundedCornerShape(24.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
         ) {
-            Column(
-                modifier = Modifier.padding(20.dp)
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(18.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "SmartAttend",
-                    color = MaterialTheme.colorScheme.onPrimary,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 22.sp
+                    text = "🔐",
+                    fontSize = 30.sp
                 )
 
-                Text(
-                    text = "Admin can create HR. HR can create Employee. Employee can use QR attendance.",
-                    modifier = Modifier.padding(top = 8.dp),
-                    color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.85f)
-                )
+                Column(
+                    modifier = Modifier.padding(start = 14.dp)
+                ) {
+                    Text(
+                        text = "Role-based access",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp
+                    )
+
+                    Text(
+                        text = "Admin creates HR. HR creates Employees.",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontSize = 14.sp
+                    )
+                }
             }
         }
     }
 }
 
 @Composable
-private fun AdminTopBar(
-    onLogoutClick: () -> Unit
-) {
+private fun AdminHeader() {
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Surface(
-            modifier = Modifier.size(48.dp),
+            modifier = Modifier.size(50.dp),
             shape = CircleShape,
             color = MaterialTheme.colorScheme.primary
         ) {
@@ -175,9 +179,7 @@ private fun AdminTopBar(
         }
 
         Column(
-            modifier = Modifier
-                .weight(1f)
-                .padding(start = 12.dp)
+            modifier = Modifier.padding(start = 12.dp)
         ) {
             Text(
                 text = "Hello, Admin",
@@ -191,15 +193,11 @@ private fun AdminTopBar(
                 fontSize = 14.sp
             )
         }
-
-        TextButton(onClick = onLogoutClick) {
-            Text("Logout")
-        }
     }
 }
 
 @Composable
-private fun DashboardCard(
+private fun AdminStatCard(
     title: String,
     value: String,
     emoji: String,
@@ -231,7 +229,8 @@ private fun DashboardCard(
 
                 Text(
                     text = title,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontSize = 14.sp
                 )
             }
         }
