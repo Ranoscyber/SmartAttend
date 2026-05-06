@@ -10,6 +10,7 @@ import com.google.firebase.FirebaseApp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
 import kotlinx.coroutines.tasks.await
+import com.example.smartattend.data.model.Workplace
 
 class HrRepository {
 
@@ -215,5 +216,125 @@ class HrRepository {
 
     private fun generateEmployeeId(counter: Int): String {
         return "EMP" + counter.toString().padStart(3, '0')
+    }
+
+    suspend fun saveWorkplace(
+        name: String,
+        latitude: Double,
+        longitude: Double,
+        allowedRadius: Double,
+        startTime: String,
+        lateAfterTime: String
+    ): Result<String> {
+        return try {
+            val currentHrUid = auth.currentUser?.uid
+                ?: return Result.failure(Exception("HR user not found"))
+
+            val activeWorkplaceIdSnapshot = database
+                .child("app_settings")
+                .child("activeWorkplaceId")
+                .get()
+                .await()
+
+            val existingWorkplaceId = activeWorkplaceIdSnapshot.value?.toString()
+
+            val workplaceId: String
+            val qrCodeValue: String
+            val createdAt: Long
+
+            if (!existingWorkplaceId.isNullOrBlank()) {
+                workplaceId = existingWorkplaceId
+
+                val oldSnapshot = database
+                    .child("workplaces")
+                    .child(workplaceId)
+                    .get()
+                    .await()
+
+                qrCodeValue = oldSnapshot.child("qrCodeValue").value?.toString()
+                    ?: "SMARTATTEND_$workplaceId"
+
+                createdAt = oldSnapshot.child("createdAt").getValue(Long::class.java)
+                    ?: System.currentTimeMillis()
+            } else {
+                val counterSnapshot = database
+                    .child("counters")
+                    .child("workplaceCounter")
+                    .get()
+                    .await()
+
+                val currentCounter = counterSnapshot.getValue(Int::class.java) ?: 1
+
+                workplaceId = generateWorkplaceId(currentCounter)
+                qrCodeValue = "SMARTATTEND_$workplaceId"
+                createdAt = System.currentTimeMillis()
+
+                database
+                    .child("counters")
+                    .child("workplaceCounter")
+                    .setValue(currentCounter + 1)
+                    .await()
+            }
+
+            val workplace = Workplace(
+                workplaceId = workplaceId,
+                name = name,
+                latitude = latitude,
+                longitude = longitude,
+                allowedRadius = allowedRadius,
+                startTime = startTime,
+                lateAfterTime = lateAfterTime,
+                qrCodeValue = qrCodeValue,
+                status = "active",
+                createdBy = currentHrUid,
+                createdAt = createdAt,
+                updatedAt = System.currentTimeMillis()
+            )
+
+            val updates = hashMapOf<String, Any>(
+                "workplaces/$workplaceId" to workplace,
+                "app_settings/activeWorkplaceId" to workplaceId
+            )
+
+            database.updateChildren(updates).await()
+
+            Result.success(workplaceId)
+
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun getActiveWorkplace(): Result<Workplace?> {
+        return try {
+            val activeWorkplaceIdSnapshot = database
+                .child("app_settings")
+                .child("activeWorkplaceId")
+                .get()
+                .await()
+
+            val workplaceId = activeWorkplaceIdSnapshot.value?.toString()
+
+            if (workplaceId.isNullOrBlank()) {
+                return Result.success(null)
+            }
+
+            val workplaceSnapshot = database
+                .child("workplaces")
+                .child(workplaceId)
+                .get()
+                .await()
+
+            val workplace = workplaceSnapshot.getValue(Workplace::class.java)
+
+            Result.success(workplace)
+
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    private fun generateWorkplaceId(counter: Int): String {
+        return "WP" + counter.toString().padStart(3, '0')
     }
 }
