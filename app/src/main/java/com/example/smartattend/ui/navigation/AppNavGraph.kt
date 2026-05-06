@@ -14,6 +14,7 @@ import com.example.smartattend.viewmodel.AdminViewModel
 import com.example.smartattend.viewmodel.AuthViewModel
 import com.example.smartattend.viewmodel.EmployeeViewModel
 import com.example.smartattend.viewmodel.HrViewModel
+import com.example.smartattend.viewmodel.AttendanceViewModel
 
 @Composable
 fun AppNavGraph() {
@@ -23,6 +24,8 @@ fun AppNavGraph() {
     val adminViewModel: AdminViewModel = viewModel()
     val hrViewModel: HrViewModel = viewModel()
     val employeeViewModel: EmployeeViewModel = viewModel()
+
+    val attendanceViewModel: AttendanceViewModel = viewModel()
 
     NavHost(
         navController = navController,
@@ -111,7 +114,8 @@ fun AppNavGraph() {
 
         composable(Routes.EMPLOYEE_HOME) {
             EmployeeRootScreen(
-                viewModel = employeeViewModel,
+                employeeViewModel = employeeViewModel,
+                attendanceViewModel = attendanceViewModel,
                 onLogoutClick = {
                     authViewModel.logout()
 
