@@ -5,6 +5,8 @@ import android.annotation.SuppressLint
 import android.content.pm.PackageManager
 import android.location.Location
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -32,10 +34,6 @@ fun EmployeeScanScreen(
 
     var scannedQrValue by remember { mutableStateOf("") }
 
-    val fusedLocationClient = remember {
-        LocationServices.getFusedLocationProviderClient(context)
-    }
-
     val qrScannerLauncher = rememberLauncherForActivityResult(
         contract = ScanContract()
     ) { result ->
@@ -57,20 +55,26 @@ fun EmployeeScanScreen(
                 )
             },
             onError = { error ->
-                attendanceViewModel.clearMessages()
+                attendanceViewModel.showError(error)
             }
         )
     }
 
     val permissionLauncher = rememberLauncherForActivityResult(
-        contract = androidx.activity.result.contract.ActivityResultContracts.RequestMultiplePermissions()
+        contract = ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
         val cameraGranted = permissions[Manifest.permission.CAMERA] == true
-        val locationGranted = permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true ||
-                permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true
+
+        val locationGranted =
+            permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true ||
+                    permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true
 
         if (cameraGranted && locationGranted) {
             launchQrScanner(qrScannerLauncher)
+        } else {
+            attendanceViewModel.showError(
+                "Camera and location permission are required to scan QR."
+            )
         }
     }
 
@@ -79,6 +83,7 @@ fun EmployeeScanScreen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.surfaceVariant)
             .statusBarsPadding()
+            .navigationBarsPadding()
             .padding(20.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -177,49 +182,52 @@ fun EmployeeScanScreen(
             )
         }
 
-        uiState.successMessage?.let {
+        uiState.successMessage?.let { message ->
             Spacer(modifier = Modifier.height(14.dp))
-            SuccessCard(message = it)
+            SuccessCard(message = message)
         }
 
-        uiState.errorMessage?.let {
+        uiState.errorMessage?.let { message ->
             Spacer(modifier = Modifier.height(14.dp))
-            ErrorCardBox(message = it)
+            ErrorCardBox(message = message)
         }
     }
 }
 
 private fun launchQrScanner(
-    qrScannerLauncher: androidx.activity.result.ActivityResultLauncher<ScanOptions>
+    qrScannerLauncher: ActivityResultLauncher<ScanOptions>
 ) {
-    val options = ScanOptions()
-    options.setDesiredBarcodeFormats(ScanOptions.QR_CODE)
-    options.setPrompt("Scan SmartAttend workplace QR")
-    options.setCameraId(0)
-    options.setBeepEnabled(true)
-    options.setBarcodeImageEnabled(false)
-    options.setOrientationLocked(false)
+    val options = ScanOptions().apply {
+        setDesiredBarcodeFormats(ScanOptions.QR_CODE)
+        setPrompt("Scan SmartAttend workplace QR")
+        setCameraId(0)
+        setBeepEnabled(true)
+        setBarcodeImageEnabled(false)
+        setOrientationLocked(false)
+    }
 
     qrScannerLauncher.launch(options)
 }
 
-private fun hasCameraAndLocationPermission(context: android.content.Context): Boolean {
-    val camera = ContextCompat.checkSelfPermission(
+private fun hasCameraAndLocationPermission(
+    context: android.content.Context
+): Boolean {
+    val cameraGranted = ContextCompat.checkSelfPermission(
         context,
         Manifest.permission.CAMERA
     ) == PackageManager.PERMISSION_GRANTED
 
-    val fineLocation = ContextCompat.checkSelfPermission(
+    val fineLocationGranted = ContextCompat.checkSelfPermission(
         context,
         Manifest.permission.ACCESS_FINE_LOCATION
     ) == PackageManager.PERMISSION_GRANTED
 
-    val coarseLocation = ContextCompat.checkSelfPermission(
+    val coarseLocationGranted = ContextCompat.checkSelfPermission(
         context,
         Manifest.permission.ACCESS_COARSE_LOCATION
     ) == PackageManager.PERMISSION_GRANTED
 
-    return camera && (fineLocation || coarseLocation)
+    return cameraGranted && (fineLocationGranted || coarseLocationGranted)
 }
 
 @SuppressLint("MissingPermission")
@@ -239,8 +247,8 @@ private fun getCurrentLocation(
                 onError("Cannot get current location. Please enable GPS.")
             }
         }
-        .addOnFailureListener {
-            onError(it.message ?: "Failed to get location")
+        .addOnFailureListener { exception ->
+            onError(exception.message ?: "Failed to get location.")
         }
 }
 
@@ -271,7 +279,9 @@ private fun InfoCard(
 }
 
 @Composable
-private fun SuccessCard(message: String) {
+private fun SuccessCard(
+    message: String
+) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(18.dp),
@@ -286,7 +296,9 @@ private fun SuccessCard(message: String) {
 }
 
 @Composable
-private fun ErrorCardBox(message: String) {
+private fun ErrorCardBox(
+    message: String
+) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(18.dp),

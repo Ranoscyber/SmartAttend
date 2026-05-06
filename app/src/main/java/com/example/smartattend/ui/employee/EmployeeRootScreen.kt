@@ -58,7 +58,7 @@ fun EmployeeRootScreen(
                 }
 
                 EmployeeTab.ATTENDANCE -> {
-                    EmployeeAttendanceScreen(viewModel = employeeViewModel)
+                    EmployeeAttendanceScreen(attendanceViewModel = attendanceViewModel)
                 }
 
                 EmployeeTab.SALARY -> {
