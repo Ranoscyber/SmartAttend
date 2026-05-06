@@ -7,6 +7,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.example.smartattend.viewmodel.AttendanceViewModel
 import com.example.smartattend.viewmodel.EmployeeViewModel
 
 private enum class EmployeeTab(
@@ -14,6 +15,7 @@ private enum class EmployeeTab(
     val icon: String
 ) {
     HOME("Home", "🏠"),
+    SCAN("Scan", "📷"),
     ATTENDANCE("Attendance", "🕘"),
     SALARY("Salary", "💵"),
     PROFILE("Profile", "👤")
@@ -21,13 +23,14 @@ private enum class EmployeeTab(
 
 @Composable
 fun EmployeeRootScreen(
-    viewModel: EmployeeViewModel,
+    employeeViewModel: EmployeeViewModel,
+    attendanceViewModel: AttendanceViewModel,
     onLogoutClick: () -> Unit
 ) {
     var selectedTab by remember { mutableStateOf(EmployeeTab.HOME) }
 
     LaunchedEffect(Unit) {
-        viewModel.loadEmployeeProfile()
+        employeeViewModel.loadEmployeeProfile()
     }
 
     Scaffold(
@@ -47,20 +50,24 @@ fun EmployeeRootScreen(
         ) {
             when (selectedTab) {
                 EmployeeTab.HOME -> {
-                    EmployeeHomeScreen(viewModel = viewModel)
+                    EmployeeHomeScreen(viewModel = employeeViewModel)
+                }
+
+                EmployeeTab.SCAN -> {
+                    EmployeeScanScreen(attendanceViewModel = attendanceViewModel)
                 }
 
                 EmployeeTab.ATTENDANCE -> {
-                    EmployeeAttendanceScreen(viewModel = viewModel)
+                    EmployeeAttendanceScreen(viewModel = employeeViewModel)
                 }
 
                 EmployeeTab.SALARY -> {
-                    EmployeeSalaryScreen(viewModel = viewModel)
+                    EmployeeSalaryScreen(viewModel = employeeViewModel)
                 }
 
                 EmployeeTab.PROFILE -> {
                     EmployeeProfileScreen(
-                        viewModel = viewModel,
+                        viewModel = employeeViewModel,
                         onLogoutConfirmed = onLogoutClick
                     )
                 }
