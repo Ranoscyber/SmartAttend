@@ -13,7 +13,11 @@ data class Attendance(
     val status: String = "",
     val latitude: Double = 0.0,
     val longitude: Double = 0.0,
+    val checkOutLatitude: Double = 0.0,
+    val checkOutLongitude: Double = 0.0,
     val distanceMeter: Double = 0.0,
+    val checkOutDistanceMeter: Double = 0.0,
     val isMockLocation: Boolean = false,
-    val createdAt: Long = System.currentTimeMillis()
+    val createdAt: Long = System.currentTimeMillis(),
+    val updatedAt: Long = System.currentTimeMillis()
 )

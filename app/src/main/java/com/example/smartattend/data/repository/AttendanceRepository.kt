@@ -25,6 +25,7 @@ class AttendanceRepository {
                 ?: return Result.failure(Exception("Employee user not found"))
 
             val employee = getCurrentEmployee(uid)
+
             val workplace = getActiveWorkplace()
                 ?: return Result.failure(Exception("No active workplace found"))
 
@@ -32,7 +33,8 @@ class AttendanceRepository {
                 saveFakeLocationAlert(
                     employee = employee,
                     workplace = workplace,
-                    location = location
+                    location = location,
+                    reason = "Mock/Fake GPS location detected during check-in"
                 )
 
                 return Result.failure(
@@ -71,6 +73,7 @@ class AttendanceRepository {
             }
 
             val checkInTime = DateTimeUtil.currentTime()
+
             val attendanceStatus = if (
                 DateTimeUtil.isLate(checkInTime, workplace.lateAfterTime)
             ) {
@@ -94,7 +97,8 @@ class AttendanceRepository {
                 longitude = location.longitude,
                 distanceMeter = distance.toDouble(),
                 isMockLocation = false,
-                createdAt = DateTimeUtil.currentTimestamp()
+                createdAt = DateTimeUtil.currentTimestamp(),
+                updatedAt = DateTimeUtil.currentTimestamp()
             )
 
             database
@@ -104,6 +108,139 @@ class AttendanceRepository {
                 .await()
 
             Result.success("Check-in successful: $attendanceStatus")
+
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun checkOut(location: Location): Result<String> {
+        return try {
+            val uid = auth.currentUser?.uid
+                ?: return Result.failure(Exception("Employee user not found"))
+
+            val employee = getCurrentEmployee(uid)
+
+            val workplace = getActiveWorkplace()
+                ?: return Result.failure(Exception("No active workplace found"))
+
+            if (LocationValidator.isMockLocation(location)) {
+                saveFakeLocationAlert(
+                    employee = employee,
+                    workplace = workplace,
+                    location = location,
+                    reason = "Mock/Fake GPS location detected during check-out"
+                )
+
+                return Result.failure(
+                    Exception("Fake GPS detected. Check-out denied and HR has been alerted.")
+                )
+            }
+
+            val distance = LocationValidator.calculateDistanceMeters(
+                employeeLatitude = location.latitude,
+                employeeLongitude = location.longitude,
+                workplaceLatitude = workplace.latitude,
+                workplaceLongitude = workplace.longitude
+            )
+
+            if (distance > workplace.allowedRadius) {
+                return Result.failure(
+                    Exception("You are not at the workplace. Distance: ${distance.toInt()} meters")
+                )
+            }
+
+            val today = DateTimeUtil.todayDate()
+            val attendanceId = "${employee.employeeId}_$today"
+
+            val attendanceSnapshot = database
+                .child("attendance")
+                .child(attendanceId)
+                .get()
+                .await()
+
+            if (!attendanceSnapshot.exists()) {
+                return Result.failure(Exception("You have not checked in today"))
+            }
+
+            val oldCheckOutTime = attendanceSnapshot.child("checkOutTime").value?.toString() ?: ""
+
+            if (oldCheckOutTime.isNotBlank()) {
+                return Result.failure(Exception("You already checked out today"))
+            }
+
+            val checkOutTime = DateTimeUtil.currentTime()
+
+            val updates = mapOf<String, Any>(
+                "checkOutTime" to checkOutTime,
+                "checkOutLatitude" to location.latitude,
+                "checkOutLongitude" to location.longitude,
+                "checkOutDistanceMeter" to distance.toDouble(),
+                "updatedAt" to DateTimeUtil.currentTimestamp()
+            )
+
+            database
+                .child("attendance")
+                .child(attendanceId)
+                .updateChildren(updates)
+                .await()
+
+            Result.success("Check-out successful: $checkOutTime")
+
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun getTodayAttendance(): Result<Attendance?> {
+        return try {
+            val uid = auth.currentUser?.uid
+                ?: return Result.failure(Exception("Employee user not found"))
+
+            val employee = getCurrentEmployee(uid)
+            val today = DateTimeUtil.todayDate()
+            val attendanceId = "${employee.employeeId}_$today"
+
+            val snapshot = database
+                .child("attendance")
+                .child(attendanceId)
+                .get()
+                .await()
+
+            if (!snapshot.exists()) {
+                return Result.success(null)
+            }
+
+            val attendance = snapshot.getValue(Attendance::class.java)
+
+            Result.success(attendance)
+
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun getMyAttendanceHistory(): Result<List<Attendance>> {
+        return try {
+            val uid = auth.currentUser?.uid
+                ?: return Result.failure(Exception("Employee user not found"))
+
+            val employee = getCurrentEmployee(uid)
+
+            val snapshot = database
+                .child("attendance")
+                .get()
+                .await()
+
+            val attendanceList = snapshot.children.mapNotNull {
+                it.getValue(Attendance::class.java)
+            }.filter {
+                it.employeeId == employee.employeeId
+            }.sortedByDescending {
+                it.date
+            }
+
+            Result.success(attendanceList)
 
         } catch (e: Exception) {
             Result.failure(e)
@@ -159,7 +296,8 @@ class AttendanceRepository {
     private suspend fun saveFakeLocationAlert(
         employee: Employee,
         workplace: Workplace,
-        location: Location
+        location: Location,
+        reason: String
     ) {
         val alertRef = database
             .child("fake_location_alerts")
@@ -176,7 +314,7 @@ class AttendanceRepository {
             workplaceName = workplace.name,
             latitude = location.latitude,
             longitude = location.longitude,
-            reason = "Mock/Fake GPS location detected during check-in",
+            reason = reason,
             status = "unread",
             createdAt = DateTimeUtil.currentTimestamp()
         )
