@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import com.example.smartattend.data.model.Workplace
 
 data class HrUiState(
     val isLoading: Boolean = false,
@@ -18,7 +19,8 @@ data class HrUiState(
     val departments: List<Department> = emptyList(),
     val totalDepartments: Int = 0,
     val totalEmployees: Int = 0,
-    val employeeCreated: Boolean = false
+    val employeeCreated: Boolean = false,
+    val workplace: Workplace? = null
 )
 
 class HrViewModel(
@@ -28,12 +30,14 @@ class HrViewModel(
     private val _uiState = MutableStateFlow(HrUiState())
     val uiState: StateFlow<HrUiState> = _uiState.asStateFlow()
 
+
     fun loadHrData() {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
 
             val departmentsResult = hrRepository.getDepartments()
             val employeeCountResult = hrRepository.getEmployeeCount()
+            val workplaceResult = hrRepository.getActiveWorkplace()
 
             val departments = departmentsResult.getOrDefault(emptyList())
 
@@ -41,7 +45,8 @@ class HrViewModel(
                 isLoading = false,
                 departments = departments,
                 totalDepartments = departments.size,
-                totalEmployees = employeeCountResult.getOrDefault(0)
+                totalEmployees = employeeCountResult.getOrDefault(0),
+                workplace = workplaceResult.getOrDefault(null)
             )
         }
     }
@@ -198,5 +203,78 @@ class HrViewModel(
             errorMessage = null,
             isLoading = false
         )
+    }
+
+    fun saveWorkplace(
+        name: String,
+        latitudeText: String,
+        longitudeText: String,
+        allowedRadiusText: String,
+        startTime: String,
+        lateAfterTime: String
+    ) {
+        val cleanName = name.trim()
+        val latitude = latitudeText.trim().toDoubleOrNull()
+        val longitude = longitudeText.trim().toDoubleOrNull()
+        val allowedRadius = allowedRadiusText.trim().toDoubleOrNull()
+
+        if (cleanName.isBlank()) {
+            _uiState.value = _uiState.value.copy(errorMessage = "Workplace name is required")
+            return
+        }
+
+        if (latitude == null) {
+            _uiState.value = _uiState.value.copy(errorMessage = "Valid latitude is required")
+            return
+        }
+
+        if (longitude == null) {
+            _uiState.value = _uiState.value.copy(errorMessage = "Valid longitude is required")
+            return
+        }
+
+        if (allowedRadius == null || allowedRadius <= 0.0) {
+            _uiState.value = _uiState.value.copy(errorMessage = "Valid allowed radius is required")
+            return
+        }
+
+        if (startTime.isBlank()) {
+            _uiState.value = _uiState.value.copy(errorMessage = "Start time is required")
+            return
+        }
+
+        if (lateAfterTime.isBlank()) {
+            _uiState.value = _uiState.value.copy(errorMessage = "Late after time is required")
+            return
+        }
+
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true)
+
+            val result = hrRepository.saveWorkplace(
+                name = cleanName,
+                latitude = latitude,
+                longitude = longitude,
+                allowedRadius = allowedRadius,
+                startTime = startTime.trim(),
+                lateAfterTime = lateAfterTime.trim()
+            )
+
+            result
+                .onSuccess { workplaceId ->
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        successMessage = "Workplace saved successfully: $workplaceId"
+                    )
+
+                    loadHrData()
+                }
+                .onFailure { error ->
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        errorMessage = error.message ?: "Failed to save workplace"
+                    )
+                }
+        }
     }
 }

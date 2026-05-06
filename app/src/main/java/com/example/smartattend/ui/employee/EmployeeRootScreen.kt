@@ -1,4 +1,4 @@
-package com.example.smartattend.ui.hr
+package com.example.smartattend.ui.employee
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -7,33 +7,32 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.example.smartattend.viewmodel.HrViewModel
+import com.example.smartattend.viewmodel.EmployeeViewModel
 
-private enum class HrTab(
+private enum class EmployeeTab(
     val label: String,
     val icon: String
 ) {
-    DASHBOARD("Dashboard", "🏠"),
-    WORKPLACE("Workplace", "📍"),
-    DEPARTMENTS("Departments", "🏢"),
-    EMPLOYEES("Employees", "👥"),
+    HOME("Home", "🏠"),
+    ATTENDANCE("Attendance", "🕘"),
+    SALARY("Salary", "💵"),
     PROFILE("Profile", "👤")
 }
 
 @Composable
-fun HrRootScreen(
-    viewModel: HrViewModel,
+fun EmployeeRootScreen(
+    viewModel: EmployeeViewModel,
     onLogoutClick: () -> Unit
 ) {
-    var selectedTab by remember { mutableStateOf(HrTab.DASHBOARD) }
+    var selectedTab by remember { mutableStateOf(EmployeeTab.HOME) }
 
     LaunchedEffect(Unit) {
-        viewModel.loadHrData()
+        viewModel.loadEmployeeProfile()
     }
 
     Scaffold(
         bottomBar = {
-            HrBottomBar(
+            EmployeeBottomBar(
                 selectedTab = selectedTab,
                 onTabSelected = { selectedTab = it }
             )
@@ -47,24 +46,21 @@ fun HrRootScreen(
                 .padding(paddingValues)
         ) {
             when (selectedTab) {
-                HrTab.DASHBOARD -> {
-                    HrDashboardScreen(viewModel = viewModel)
+                EmployeeTab.HOME -> {
+                    EmployeeHomeScreen(viewModel = viewModel)
                 }
 
-                HrTab.WORKPLACE -> {
-                    HrWorkplaceScreen(viewModel = viewModel)
+                EmployeeTab.ATTENDANCE -> {
+                    EmployeeAttendanceScreen(viewModel = viewModel)
                 }
 
-                HrTab.DEPARTMENTS -> {
-                    HrDepartmentsScreen(viewModel = viewModel)
+                EmployeeTab.SALARY -> {
+                    EmployeeSalaryScreen(viewModel = viewModel)
                 }
 
-                HrTab.EMPLOYEES -> {
-                    HrEmployeesScreen(viewModel = viewModel)
-                }
-
-                HrTab.PROFILE -> {
-                    HrProfileScreen(
+                EmployeeTab.PROFILE -> {
+                    EmployeeProfileScreen(
+                        viewModel = viewModel,
                         onLogoutConfirmed = onLogoutClick
                     )
                 }
@@ -74,15 +70,15 @@ fun HrRootScreen(
 }
 
 @Composable
-private fun HrBottomBar(
-    selectedTab: HrTab,
-    onTabSelected: (HrTab) -> Unit
+private fun EmployeeBottomBar(
+    selectedTab: EmployeeTab,
+    onTabSelected: (EmployeeTab) -> Unit
 ) {
     NavigationBar(
         modifier = Modifier.navigationBarsPadding(),
         tonalElevation = 8.dp
     ) {
-        HrTab.entries.forEach { tab ->
+        EmployeeTab.entries.forEach { tab ->
             NavigationBarItem(
                 selected = selectedTab == tab,
                 onClick = { onTabSelected(tab) },

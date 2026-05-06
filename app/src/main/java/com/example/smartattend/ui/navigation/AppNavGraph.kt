@@ -8,10 +8,11 @@ import com.example.smartattend.ui.admin.AddHrScreen
 import com.example.smartattend.ui.admin.AdminRootScreen
 import com.example.smartattend.ui.auth.ForgotPasswordScreen
 import com.example.smartattend.ui.auth.LoginScreen
-import com.example.smartattend.ui.employee.EmployeeHomeScreen
+import com.example.smartattend.ui.employee.EmployeeRootScreen
 import com.example.smartattend.ui.hr.HrRootScreen
 import com.example.smartattend.viewmodel.AdminViewModel
 import com.example.smartattend.viewmodel.AuthViewModel
+import com.example.smartattend.viewmodel.EmployeeViewModel
 import com.example.smartattend.viewmodel.HrViewModel
 
 @Composable
@@ -21,6 +22,7 @@ fun AppNavGraph() {
     val authViewModel: AuthViewModel = viewModel()
     val adminViewModel: AdminViewModel = viewModel()
     val hrViewModel: HrViewModel = viewModel()
+    val employeeViewModel: EmployeeViewModel = viewModel()
 
     NavHost(
         navController = navController,
@@ -108,7 +110,16 @@ fun AppNavGraph() {
         }
 
         composable(Routes.EMPLOYEE_HOME) {
-            EmployeeHomeScreen()
+            EmployeeRootScreen(
+                viewModel = employeeViewModel,
+                onLogoutClick = {
+                    authViewModel.logout()
+
+                    navController.navigate(Routes.LOGIN) {
+                        popUpTo(Routes.EMPLOYEE_HOME) { inclusive = true }
+                    }
+                }
+            )
         }
     }
 }
