@@ -12,6 +12,7 @@ import kotlinx.coroutines.launch
 import com.example.smartattend.data.model.Attendance
 import com.example.smartattend.data.model.FakeLocationAlert
 import com.example.smartattend.data.model.SalaryReport
+import com.example.smartattend.data.model.HRProfile
 
 data class AdminUiState(
     val isLoading: Boolean = false,
@@ -20,6 +21,7 @@ data class AdminUiState(
     val hrCreated: Boolean = false,
     val totalHr: Int = 0,
     val totalEmployees: Int = 0,
+    val hrProfiles: List<HRProfile> = emptyList(),
     val attendanceReports: List<Attendance> = emptyList(),
     val fakeLocationAlerts: List<FakeLocationAlert> = emptyList(),
     val salaryReports: List<SalaryReport> = emptyList()
@@ -36,12 +38,15 @@ class AdminViewModel(
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
 
-            val hrResult = adminRepository.getHrCount()
+            val hrResult = adminRepository.getHrProfiles()
             val employeeResult = adminRepository.getEmployeeCount()
+
+            val hrProfiles = hrResult.getOrDefault(emptyList())
 
             _uiState.value = _uiState.value.copy(
                 isLoading = false,
-                totalHr = hrResult.getOrDefault(0),
+                hrProfiles = hrProfiles,
+                totalHr = hrProfiles.size,
                 totalEmployees = employeeResult.getOrDefault(0)
             )
         }
@@ -153,6 +158,29 @@ class AdminViewModel(
                 .onFailure { error ->
                     _uiState.value = _uiState.value.copy(
                         errorMessage = error.message ?: "Failed to update alert"
+                    )
+                }
+        }
+    }
+
+    fun loadHrProfiles() {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true)
+
+            val result = adminRepository.getHrProfiles()
+
+            result
+                .onSuccess { hrProfiles ->
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        hrProfiles = hrProfiles,
+                        totalHr = hrProfiles.size
+                    )
+                }
+                .onFailure { error ->
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        errorMessage = error.message ?: "Failed to load HR list"
                     )
                 }
         }

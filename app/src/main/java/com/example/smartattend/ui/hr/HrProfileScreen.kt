@@ -87,19 +87,6 @@ fun HrProfileScreen(
 
         Spacer(modifier = Modifier.height(18.dp))
 
-        OutlinedButton(
-            onClick = {
-                // Later: Change password
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(54.dp),
-            shape = RoundedCornerShape(18.dp)
-        ) {
-            Text("Change Password")
-        }
-
-        Spacer(modifier = Modifier.height(18.dp))
 
         Button(
             onClick = { showLogoutDialog = true },

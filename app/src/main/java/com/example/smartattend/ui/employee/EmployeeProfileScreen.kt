@@ -62,34 +62,6 @@ fun EmployeeProfileScreen(
 
                 Spacer(modifier = Modifier.height(18.dp))
 
-                OutlinedButton(
-                    onClick = {
-                        // Later: request profile update
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(54.dp),
-                    shape = RoundedCornerShape(18.dp)
-                ) {
-                    Text("Request Profile Update")
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                OutlinedButton(
-                    onClick = {
-                        // Later: change password
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(54.dp),
-                    shape = RoundedCornerShape(18.dp)
-                ) {
-                    Text("Change Password")
-                }
-
-                Spacer(modifier = Modifier.height(18.dp))
-
                 Button(
                     onClick = {
                         showLogoutDialog = true

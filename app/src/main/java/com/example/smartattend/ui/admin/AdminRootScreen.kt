@@ -53,6 +53,7 @@ fun AdminRootScreen(
 
                 AdminTab.HR -> {
                     AdminHrTabScreen(
+                        viewModel = viewModel,
                         onAddHrClick = onAddHrClick
                     )
                 }

@@ -13,6 +13,7 @@ import com.example.smartattend.data.model.FakeLocationAlert
 import com.example.smartattend.data.model.SalaryReport
 import com.example.smartattend.util.DateTimeUtil
 
+
 class AdminRepository {
 
     private val auth = FirebaseAuth.getInstance()
@@ -251,6 +252,26 @@ class AdminRepository {
             }
 
             Result.success(reports)
+
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun getHrProfiles(): Result<List<HRProfile>> {
+        return try {
+            val snapshot = database
+                .child("hr_profiles")
+                .get()
+                .await()
+
+            val hrProfiles = snapshot.children.mapNotNull {
+                it.getValue(HRProfile::class.java)
+            }.sortedBy {
+                it.fullName
+            }
+
+            Result.success(hrProfiles)
 
         } catch (e: Exception) {
             Result.failure(e)

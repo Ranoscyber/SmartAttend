@@ -11,15 +11,28 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.smartattend.data.model.Attendance
 import com.example.smartattend.data.model.Employee
+import com.example.smartattend.viewmodel.AttendanceViewModel
 import com.example.smartattend.viewmodel.EmployeeViewModel
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 @Composable
 fun EmployeeSalaryScreen(
-    viewModel: EmployeeViewModel
+    employeeViewModel: EmployeeViewModel,
+    attendanceViewModel: AttendanceViewModel
 ) {
-    val uiState by viewModel.uiState.collectAsState()
-    val employee = uiState.employee
+    val employeeUiState by employeeViewModel.uiState.collectAsState()
+    val attendanceUiState by attendanceViewModel.uiState.collectAsState()
+
+    val employee = employeeUiState.employee
+
+    LaunchedEffect(Unit) {
+        employeeViewModel.loadEmployeeProfile()
+        attendanceViewModel.loadAttendanceData()
+    }
 
     Column(
         modifier = Modifier
@@ -37,7 +50,7 @@ fun EmployeeSalaryScreen(
         )
 
         Text(
-            text = "Salary preview based on your profile.",
+            text = "Salary calculated from this month's attendance.",
             modifier = Modifier.padding(top = 6.dp),
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -45,30 +58,68 @@ fun EmployeeSalaryScreen(
         Spacer(modifier = Modifier.height(24.dp))
 
         when {
-            uiState.isLoading -> LoadingBox()
+            employeeUiState.isLoading || attendanceUiState.isLoading -> {
+                LoadingBox()
+            }
 
-            uiState.errorMessage != null -> ErrorCard(
-                message = uiState.errorMessage ?: "Unknown error"
-            )
+            employeeUiState.errorMessage != null -> {
+                ErrorCard(
+                    message = employeeUiState.errorMessage ?: "Failed to load employee profile"
+                )
+            }
 
-            employee != null -> EmployeeSalaryContent(employee = employee)
+            attendanceUiState.errorMessage != null -> {
+                ErrorCard(
+                    message = attendanceUiState.errorMessage ?: "Failed to load attendance data"
+                )
+            }
+
+            employee != null -> {
+                EmployeeSalaryContent(
+                    employee = employee,
+                    attendanceHistory = attendanceUiState.attendanceHistory
+                )
+            }
         }
     }
 }
 
 @Composable
 private fun EmployeeSalaryContent(
-    employee: Employee
+    employee: Employee,
+    attendanceHistory: List<Attendance>
 ) {
-    val dailySalary = if (employee.workDaysPerMonth > 0) {
-        employee.baseSalary / employee.workDaysPerMonth
+    val currentMonth = currentMonth()
+
+    val currentMonthAttendance = attendanceHistory.filter {
+        it.date.startsWith(currentMonth)
+    }
+
+    val attendedDays = currentMonthAttendance
+        .map { it.date }
+        .distinct()
+        .size
+
+    val lateDays = currentMonthAttendance.count {
+        it.status == "Late"
+    }
+
+    val workDays = if (employee.workDaysPerMonth > 0) {
+        employee.workDaysPerMonth
+    } else {
+        30
+    }
+
+    val absentDays = (workDays - attendedDays).coerceAtLeast(0)
+
+    val dailySalary = if (workDays > 0) {
+        employee.baseSalary / workDays
     } else {
         0.0
     }
 
-    val absentDays = 0
     val deduction = absentDays * dailySalary
-    val finalSalary = employee.baseSalary - deduction
+    val finalSalary = (employee.baseSalary - deduction).coerceAtLeast(0.0)
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -97,7 +148,7 @@ private fun EmployeeSalaryContent(
             )
 
             Text(
-                text = "Attendance deduction will be calculated after check-in module.",
+                text = "Calculated for $currentMonth using attendance records.",
                 modifier = Modifier.padding(top = 8.dp),
                 color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.86f)
             )
@@ -122,28 +173,20 @@ private fun EmployeeSalaryContent(
 
             Spacer(modifier = Modifier.height(12.dp))
 
+            ProfileInfoRow("Month", currentMonth)
             ProfileInfoRow("Base Salary", "$${formatMoney(employee.baseSalary)}")
-            ProfileInfoRow("Work Days Per Month", employee.workDaysPerMonth.toString())
-            ProfileInfoRow("Daily Salary", "$${formatMoney(dailySalary)}")
+            ProfileInfoRow("Work Days Per Month", workDays.toString())
+            ProfileInfoRow("Attended Days", attendedDays.toString())
             ProfileInfoRow("Absent Days", absentDays.toString())
+            ProfileInfoRow("Late Days", lateDays.toString())
+            ProfileInfoRow("Daily Salary", "$${formatMoney(dailySalary)}")
             ProfileInfoRow("Deduction", "$${formatMoney(deduction)}")
             ProfileInfoRow("Final Salary", "$${formatMoney(finalSalary)}")
         }
     }
+}
 
-    Spacer(modifier = Modifier.height(18.dp))
-
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(22.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer
-        )
-    ) {
-        Text(
-            text = "Formula: Final Salary = Base Salary - (Absent Days × Daily Salary)",
-            modifier = Modifier.padding(18.dp),
-            color = MaterialTheme.colorScheme.onPrimaryContainer
-        )
-    }
+private fun currentMonth(): String {
+    return SimpleDateFormat("yyyy-MM", Locale.getDefault())
+        .format(Date())
 }
