@@ -1,4 +1,6 @@
 package com.example.smartattend.viewmodel
+import com.example.smartattend.data.model.Attendance
+import com.example.smartattend.data.model.FakeLocationAlert
 
 import android.content.Context
 import android.net.Uri
@@ -20,7 +22,9 @@ data class HrUiState(
     val totalDepartments: Int = 0,
     val totalEmployees: Int = 0,
     val employeeCreated: Boolean = false,
-    val workplace: Workplace? = null
+    val workplace: Workplace? = null,
+    val attendanceReports: List<Attendance> = emptyList(),
+    val fakeLocationAlerts: List<FakeLocationAlert> = emptyList()
 )
 
 class HrViewModel(
@@ -273,6 +277,42 @@ class HrViewModel(
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
                         errorMessage = error.message ?: "Failed to save workplace"
+                    )
+                }
+        }
+    }
+
+    fun loadReportData() {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true)
+
+            val attendanceResult = hrRepository.getAttendanceReports()
+            val alertsResult = hrRepository.getFakeLocationAlerts()
+
+            _uiState.value = _uiState.value.copy(
+                isLoading = false,
+                attendanceReports = attendanceResult.getOrDefault(emptyList()),
+                fakeLocationAlerts = alertsResult.getOrDefault(emptyList())
+            )
+        }
+    }
+
+    fun markAlertAsRead(alertId: String) {
+        if (alertId.isBlank()) return
+
+        viewModelScope.launch {
+            val result = hrRepository.markFakeLocationAlertAsRead(alertId)
+
+            result
+                .onSuccess {
+                    _uiState.value = _uiState.value.copy(
+                        successMessage = "Alert marked as read"
+                    )
+                    loadReportData()
+                }
+                .onFailure { error ->
+                    _uiState.value = _uiState.value.copy(
+                        errorMessage = error.message ?: "Failed to update alert"
                     )
                 }
         }

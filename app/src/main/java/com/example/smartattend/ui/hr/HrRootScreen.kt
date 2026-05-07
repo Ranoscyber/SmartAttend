@@ -13,10 +13,11 @@ private enum class HrTab(
     val label: String,
     val icon: String
 ) {
-    DASHBOARD("Dashboard", "🏠"),
-    WORKPLACE("Workplace", "📍"),
-    DEPARTMENTS("Departments", "🏢"),
-    EMPLOYEES("Employees", "👥"),
+    DASHBOARD("Home", "🏠"),
+    WORKPLACE("Work", "📍"),
+    DEPARTMENTS("Dept", "🏢"),
+    EMPLOYEES("Staff", "👥"),
+    REPORTS("Reports", "📊"),
     PROFILE("Profile", "👤")
 }
 
@@ -61,6 +62,10 @@ fun HrRootScreen(
 
                 HrTab.EMPLOYEES -> {
                     HrEmployeesScreen(viewModel = viewModel)
+                }
+
+                HrTab.REPORTS -> {
+                    HrReportsScreen(viewModel = viewModel)
                 }
 
                 HrTab.PROFILE -> {
