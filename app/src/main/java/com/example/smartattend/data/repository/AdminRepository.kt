@@ -7,6 +7,11 @@ import com.example.smartattend.data.model.HRProfile
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
 import kotlinx.coroutines.tasks.await
+import com.example.smartattend.data.model.Attendance
+import com.example.smartattend.data.model.Employee
+import com.example.smartattend.data.model.FakeLocationAlert
+import com.example.smartattend.data.model.SalaryReport
+import com.example.smartattend.util.DateTimeUtil
 
 class AdminRepository {
 
@@ -107,6 +112,146 @@ class AdminRepository {
         return try {
             val snapshot = database.child("employees").get().await()
             Result.success(snapshot.childrenCount.toInt())
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun getAttendanceReports(): Result<List<Attendance>> {
+        return try {
+            val snapshot = database
+                .child("attendance")
+                .get()
+                .await()
+
+            val reports = snapshot.children.mapNotNull {
+                it.getValue(Attendance::class.java)
+            }.sortedWith(
+                compareByDescending<Attendance> { it.date }
+                    .thenByDescending { it.createdAt }
+            )
+
+            Result.success(reports)
+
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun getFakeLocationAlerts(): Result<List<FakeLocationAlert>> {
+        return try {
+            val snapshot = database
+                .child("fake_location_alerts")
+                .get()
+                .await()
+
+            val alerts = snapshot.children.mapNotNull {
+                it.getValue(FakeLocationAlert::class.java)
+            }.sortedByDescending {
+                it.createdAt
+            }
+
+            Result.success(alerts)
+
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun markFakeLocationAlertAsRead(alertId: String): Result<Unit> {
+        return try {
+            database
+                .child("fake_location_alerts")
+                .child(alertId)
+                .child("status")
+                .setValue("read")
+                .await()
+
+            Result.success(Unit)
+
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun getSalaryReports(): Result<List<SalaryReport>> {
+        return try {
+            val currentMonth = DateTimeUtil.currentMonth()
+
+            val employeesSnapshot = database
+                .child("employees")
+                .get()
+                .await()
+
+            val attendanceSnapshot = database
+                .child("attendance")
+                .get()
+                .await()
+
+            val employees = employeesSnapshot.children.mapNotNull {
+                it.getValue(Employee::class.java)
+            }.filter {
+                it.status == "active"
+            }
+
+            val attendanceList = attendanceSnapshot.children.mapNotNull {
+                it.getValue(Attendance::class.java)
+            }.filter {
+                it.date.startsWith(currentMonth)
+            }
+
+            val reports = employees.map { employee ->
+                val employeeAttendances = attendanceList.filter {
+                    it.employeeId == employee.employeeId
+                }
+
+                val attendedDays = employeeAttendances
+                    .map { it.date }
+                    .distinct()
+                    .size
+
+                val lateDays = employeeAttendances.count {
+                    it.status == "Late"
+                }
+
+                val workDays = if (employee.workDaysPerMonth > 0) {
+                    employee.workDaysPerMonth
+                } else {
+                    30
+                }
+
+                val absentDays = (workDays - attendedDays).coerceAtLeast(0)
+
+                val dailySalary = if (workDays > 0) {
+                    employee.baseSalary / workDays
+                } else {
+                    0.0
+                }
+
+                val deduction = absentDays * dailySalary
+                val finalSalary = (employee.baseSalary - deduction).coerceAtLeast(0.0)
+
+                SalaryReport(
+                    employeeId = employee.employeeId,
+                    employeeName = employee.fullName,
+                    departmentName = employee.departmentName,
+                    position = employee.position,
+                    month = currentMonth,
+                    baseSalary = employee.baseSalary,
+                    workDaysPerMonth = workDays,
+                    attendedDays = attendedDays,
+                    absentDays = absentDays,
+                    lateDays = lateDays,
+                    dailySalary = dailySalary,
+                    deduction = deduction,
+                    finalSalary = finalSalary
+                )
+            }.sortedBy {
+                it.employeeId
+            }
+
+            Result.success(reports)
+
         } catch (e: Exception) {
             Result.failure(e)
         }

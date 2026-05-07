@@ -1,4 +1,4 @@
-package com.example.smartattend.ui.hr
+package com.example.smartattend.ui.admin
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -13,14 +13,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.smartattend.data.model.Attendance
 import com.example.smartattend.data.model.FakeLocationAlert
-import com.example.smartattend.viewmodel.HrViewModel
+import com.example.smartattend.ui.hr.HrSalaryReportContent
+import com.example.smartattend.viewmodel.AdminViewModel
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
 @Composable
-fun HrReportsScreen(
-    viewModel: HrViewModel
+fun AdminReportsScreen(
+    viewModel: AdminViewModel
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var selectedTab by remember { mutableStateOf(0) }
@@ -50,7 +51,7 @@ fun HrReportsScreen(
                 )
 
                 Text(
-                    text = "Attendance records and fake GPS alerts.",
+                    text = "System attendance, alerts, and salary reports.",
                     modifier = Modifier.padding(top = 6.dp),
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -82,9 +83,7 @@ fun HrReportsScreen(
                 selected = selectedTab == 1,
                 onClick = { selectedTab = 1 },
                 text = {
-                    Text(
-                        text = "Alerts (${uiState.fakeLocationAlerts.count { it.status == "unread" }})"
-                    )
+                    Text("Alerts (${uiState.fakeLocationAlerts.count { it.status == "unread" }})")
                 }
             )
 
@@ -258,21 +257,12 @@ private fun FakeLocationAlertItem(
                     Text(
                         text = alert.employeeName,
                         fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = if (isUnread) {
-                            MaterialTheme.colorScheme.onErrorContainer
-                        } else {
-                            MaterialTheme.colorScheme.onSurface
-                        }
+                        fontWeight = FontWeight.Bold
                     )
 
                     Text(
                         text = "${alert.employeeId} • ${formatTimestamp(alert.createdAt)}",
-                        color = if (isUnread) {
-                            MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.8f)
-                        } else {
-                            MaterialTheme.colorScheme.onSurfaceVariant
-                        },
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontSize = 14.sp
                     )
                 }

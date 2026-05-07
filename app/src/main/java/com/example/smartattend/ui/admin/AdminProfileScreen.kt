@@ -119,20 +119,6 @@ fun AdminProfileScreen(
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold
                 )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                OutlinedButton(
-                    onClick = {
-                        // Later: navigate to Change Password screen
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(54.dp),
-                    shape = RoundedCornerShape(18.dp)
-                ) {
-                    Text("Change Password")
-                }
             }
         }
 

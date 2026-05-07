@@ -9,6 +9,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import com.example.smartattend.data.model.Attendance
+import com.example.smartattend.data.model.FakeLocationAlert
+import com.example.smartattend.data.model.SalaryReport
 
 data class AdminUiState(
     val isLoading: Boolean = false,
@@ -16,7 +19,10 @@ data class AdminUiState(
     val successMessage: String? = null,
     val hrCreated: Boolean = false,
     val totalHr: Int = 0,
-    val totalEmployees: Int = 0
+    val totalEmployees: Int = 0,
+    val attendanceReports: List<Attendance> = emptyList(),
+    val fakeLocationAlerts: List<FakeLocationAlert> = emptyList(),
+    val salaryReports: List<SalaryReport> = emptyList()
 )
 
 class AdminViewModel(
@@ -112,5 +118,43 @@ class AdminViewModel(
             hrCreated = false,
             isLoading = false
         )
+    }
+
+    fun loadReportData() {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true)
+
+            val attendanceResult = adminRepository.getAttendanceReports()
+            val alertsResult = adminRepository.getFakeLocationAlerts()
+            val salaryResult = adminRepository.getSalaryReports()
+
+            _uiState.value = _uiState.value.copy(
+                isLoading = false,
+                attendanceReports = attendanceResult.getOrDefault(emptyList()),
+                fakeLocationAlerts = alertsResult.getOrDefault(emptyList()),
+                salaryReports = salaryResult.getOrDefault(emptyList())
+            )
+        }
+    }
+
+    fun markAlertAsRead(alertId: String) {
+        if (alertId.isBlank()) return
+
+        viewModelScope.launch {
+            val result = adminRepository.markFakeLocationAlertAsRead(alertId)
+
+            result
+                .onSuccess {
+                    _uiState.value = _uiState.value.copy(
+                        successMessage = "Alert marked as read"
+                    )
+                    loadReportData()
+                }
+                .onFailure { error ->
+                    _uiState.value = _uiState.value.copy(
+                        errorMessage = error.message ?: "Failed to update alert"
+                    )
+                }
+        }
     }
 }

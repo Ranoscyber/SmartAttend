@@ -13,6 +13,8 @@ import kotlinx.coroutines.tasks.await
 import com.example.smartattend.data.model.Workplace
 import com.example.smartattend.data.model.Attendance
 import com.example.smartattend.data.model.FakeLocationAlert
+import com.example.smartattend.data.model.SalaryReport
+import com.example.smartattend.util.DateTimeUtil
 
 class HrRepository {
 
@@ -391,6 +393,89 @@ class HrRepository {
                 .await()
 
             Result.success(Unit)
+
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun getSalaryReports(): Result<List<SalaryReport>> {
+        return try {
+            val currentMonth = DateTimeUtil.currentMonth()
+
+            val employeesSnapshot = database
+                .child("employees")
+                .get()
+                .await()
+
+            val attendanceSnapshot = database
+                .child("attendance")
+                .get()
+                .await()
+
+            val employees = employeesSnapshot.children.mapNotNull {
+                it.getValue(Employee::class.java)
+            }.filter {
+                it.status == "active"
+            }
+
+            val attendanceList = attendanceSnapshot.children.mapNotNull {
+                it.getValue(Attendance::class.java)
+            }.filter {
+                it.date.startsWith(currentMonth)
+            }
+
+            val reports = employees.map { employee ->
+                val employeeAttendances = attendanceList.filter {
+                    it.employeeId == employee.employeeId
+                }
+
+                val attendedDays = employeeAttendances
+                    .map { it.date }
+                    .distinct()
+                    .size
+
+                val lateDays = employeeAttendances.count {
+                    it.status == "Late"
+                }
+
+                val workDays = if (employee.workDaysPerMonth > 0) {
+                    employee.workDaysPerMonth
+                } else {
+                    30
+                }
+
+                val absentDays = (workDays - attendedDays).coerceAtLeast(0)
+
+                val dailySalary = if (workDays > 0) {
+                    employee.baseSalary / workDays
+                } else {
+                    0.0
+                }
+
+                val deduction = absentDays * dailySalary
+                val finalSalary = (employee.baseSalary - deduction).coerceAtLeast(0.0)
+
+                SalaryReport(
+                    employeeId = employee.employeeId,
+                    employeeName = employee.fullName,
+                    departmentName = employee.departmentName,
+                    position = employee.position,
+                    month = currentMonth,
+                    baseSalary = employee.baseSalary,
+                    workDaysPerMonth = workDays,
+                    attendedDays = attendedDays,
+                    absentDays = absentDays,
+                    lateDays = lateDays,
+                    dailySalary = dailySalary,
+                    deduction = deduction,
+                    finalSalary = finalSalary
+                )
+            }.sortedBy {
+                it.employeeId
+            }
+
+            Result.success(reports)
 
         } catch (e: Exception) {
             Result.failure(e)

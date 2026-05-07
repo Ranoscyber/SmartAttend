@@ -118,42 +118,6 @@ fun AdminDashboardScreen(
                 }
             }
         }
-
-        Spacer(modifier = Modifier.height(18.dp))
-
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(24.dp),
-            elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(18.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "🔐",
-                    fontSize = 30.sp
-                )
-
-                Column(
-                    modifier = Modifier.padding(start = 14.dp)
-                ) {
-                    Text(
-                        text = "Role-based access",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp
-                    )
-
-                    Text(
-                        text = "Admin creates HR. HR creates Employees.",
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontSize = 14.sp
-                    )
-                }
-            }
-        }
     }
 }
 
