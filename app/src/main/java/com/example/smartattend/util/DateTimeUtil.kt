@@ -26,4 +26,9 @@ object DateTimeUtil {
     ): Boolean {
         return currentTime > lateAfterTime
     }
+
+    fun currentMonth(): String {
+        return SimpleDateFormat("yyyy-MM", Locale.getDefault())
+            .format(Date())
+    }
 }

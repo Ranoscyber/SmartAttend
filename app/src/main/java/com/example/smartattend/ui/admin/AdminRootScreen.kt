@@ -16,7 +16,6 @@ private enum class AdminTab(
     DASHBOARD("Dashboard", "🏠"),
     HR("HR", "👥"),
     REPORTS("Reports", "📊"),
-    REQUESTS("Requests", "🔔"),
     PROFILE("Profile", "👤")
 }
 
@@ -59,18 +58,8 @@ fun AdminRootScreen(
                 }
 
                 AdminTab.REPORTS -> {
-                    AdminPlaceholderScreen(
-                        title = "Reports",
-                        subtitle = "Attendance and salary reports will appear here.",
-                        emoji = "📊"
-                    )
-                }
-
-                AdminTab.REQUESTS -> {
-                    AdminPlaceholderScreen(
-                        title = "Requests",
-                        subtitle = "HR profile update requests will appear here.",
-                        emoji = "🔔"
+                    AdminReportsScreen(
+                        viewModel = viewModel
                     )
                 }
 

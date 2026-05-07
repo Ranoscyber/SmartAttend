@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import com.example.smartattend.data.model.Workplace
+import com.example.smartattend.data.model.SalaryReport
 
 data class HrUiState(
     val isLoading: Boolean = false,
@@ -24,7 +25,8 @@ data class HrUiState(
     val employeeCreated: Boolean = false,
     val workplace: Workplace? = null,
     val attendanceReports: List<Attendance> = emptyList(),
-    val fakeLocationAlerts: List<FakeLocationAlert> = emptyList()
+    val fakeLocationAlerts: List<FakeLocationAlert> = emptyList(),
+    val salaryReports: List<SalaryReport> = emptyList()
 )
 
 class HrViewModel(
@@ -288,11 +290,13 @@ class HrViewModel(
 
             val attendanceResult = hrRepository.getAttendanceReports()
             val alertsResult = hrRepository.getFakeLocationAlerts()
+            val salaryResult = hrRepository.getSalaryReports()
 
             _uiState.value = _uiState.value.copy(
                 isLoading = false,
                 attendanceReports = attendanceResult.getOrDefault(emptyList()),
-                fakeLocationAlerts = alertsResult.getOrDefault(emptyList())
+                fakeLocationAlerts = alertsResult.getOrDefault(emptyList()),
+                salaryReports = salaryResult.getOrDefault(emptyList())
             )
         }
     }
