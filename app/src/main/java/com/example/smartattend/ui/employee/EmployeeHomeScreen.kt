@@ -2,8 +2,10 @@ package com.example.smartattend.ui.employee
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -19,7 +21,8 @@ import com.example.smartattend.viewmodel.EmployeeViewModel
 
 @Composable
 fun EmployeeHomeScreen(
-    viewModel: EmployeeViewModel
+    viewModel: EmployeeViewModel,
+    onScanClick: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val employee = uiState.employee
@@ -29,7 +32,9 @@ fun EmployeeHomeScreen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.surfaceVariant)
             .statusBarsPadding()
+            .verticalScroll(rememberScrollState())
             .padding(horizontal = 20.dp, vertical = 18.dp)
+            .padding(bottom = 32.dp)
     ) {
         when {
             uiState.isLoading -> {
@@ -41,7 +46,10 @@ fun EmployeeHomeScreen(
             }
 
             employee != null -> {
-                EmployeeHomeContent(employee = employee)
+                EmployeeHomeContent(
+                    employee = employee,
+                    onScanClick = onScanClick
+                )
             }
         }
     }
@@ -49,7 +57,8 @@ fun EmployeeHomeScreen(
 
 @Composable
 private fun EmployeeHomeContent(
-    employee: Employee
+    employee: Employee,
+    onScanClick: () -> Unit
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -114,14 +123,14 @@ private fun EmployeeHomeContent(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "Not Checked In",
+                text = "Ready to Check In",
                 color = MaterialTheme.colorScheme.onPrimary,
                 fontSize = 26.sp,
                 fontWeight = FontWeight.Bold
             )
 
             Text(
-                text = "QR check-in will be added in the next module.",
+                text = "Tap the button below to open QR scanner.",
                 modifier = Modifier.padding(top = 8.dp),
                 color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.86f)
             )
@@ -129,9 +138,7 @@ private fun EmployeeHomeContent(
             Spacer(modifier = Modifier.height(18.dp))
 
             Button(
-                onClick = {
-                    // Later: open QR scan
-                },
+                onClick = onScanClick,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(54.dp),
@@ -208,7 +215,7 @@ private fun SalaryPreviewCard(
             Spacer(modifier = Modifier.height(12.dp))
 
             Text(
-                text = "Full salary calculation will use attendance records later.",
+                text = "Full salary calculation uses attendance records.",
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontSize = 13.sp
             )

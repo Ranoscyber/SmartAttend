@@ -97,33 +97,6 @@ fun HrDashboardScreen(
             )
         }
 
-        Spacer(modifier = Modifier.height(18.dp))
-
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(26.dp),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.primary
-            ),
-            elevation = CardDefaults.cardElevation(defaultElevation = 5.dp)
-        ) {
-            Column(
-                modifier = Modifier.padding(22.dp)
-            ) {
-                Text(
-                    text = "Next Step",
-                    color = MaterialTheme.colorScheme.onPrimary,
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.Bold
-                )
-
-                Text(
-                    text = "Create departments first, then create employees and assign them to departments.",
-                    modifier = Modifier.padding(top = 8.dp),
-                    color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.86f)
-                )
-            }
-        }
     }
 }
 

@@ -16,7 +16,7 @@ private enum class EmployeeTab(
 ) {
     HOME("Home", "🏠"),
     SCAN("Scan", "📷"),
-    ATTENDANCE("Attendance", "🕘"),
+    ATTENDANCE("Attend", "🕘"),
     SALARY("Salary", "💵"),
     PROFILE("Profile", "👤")
 }
@@ -50,7 +50,12 @@ fun EmployeeRootScreen(
         ) {
             when (selectedTab) {
                 EmployeeTab.HOME -> {
-                    EmployeeHomeScreen(viewModel = employeeViewModel)
+                    EmployeeHomeScreen(
+                        viewModel = employeeViewModel,
+                        onScanClick = {
+                            selectedTab = EmployeeTab.SCAN
+                        }
+                    )
                 }
 
                 EmployeeTab.SCAN -> {
@@ -62,7 +67,10 @@ fun EmployeeRootScreen(
                 }
 
                 EmployeeTab.SALARY -> {
-                    EmployeeSalaryScreen(viewModel = employeeViewModel)
+                    EmployeeSalaryScreen(
+                        employeeViewModel = employeeViewModel,
+                        attendanceViewModel = attendanceViewModel
+                    )
                 }
 
                 EmployeeTab.PROFILE -> {
