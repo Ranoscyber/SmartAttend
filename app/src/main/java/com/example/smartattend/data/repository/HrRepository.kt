@@ -11,6 +11,8 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
 import kotlinx.coroutines.tasks.await
 import com.example.smartattend.data.model.Workplace
+import com.example.smartattend.data.model.Attendance
+import com.example.smartattend.data.model.FakeLocationAlert
 
 class HrRepository {
 
@@ -336,5 +338,62 @@ class HrRepository {
 
     private fun generateWorkplaceId(counter: Int): String {
         return "WP" + counter.toString().padStart(3, '0')
+    }
+
+    suspend fun getAttendanceReports(): Result<List<Attendance>> {
+        return try {
+            val snapshot = database
+                .child("attendance")
+                .get()
+                .await()
+
+            val reports = snapshot.children.mapNotNull {
+                it.getValue(Attendance::class.java)
+            }.sortedWith(
+                compareByDescending<Attendance> { it.date }
+                    .thenByDescending { it.createdAt }
+            )
+
+            Result.success(reports)
+
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun getFakeLocationAlerts(): Result<List<FakeLocationAlert>> {
+        return try {
+            val snapshot = database
+                .child("fake_location_alerts")
+                .get()
+                .await()
+
+            val alerts = snapshot.children.mapNotNull {
+                it.getValue(FakeLocationAlert::class.java)
+            }.sortedByDescending {
+                it.createdAt
+            }
+
+            Result.success(alerts)
+
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun markFakeLocationAlertAsRead(alertId: String): Result<Unit> {
+        return try {
+            database
+                .child("fake_location_alerts")
+                .child(alertId)
+                .child("status")
+                .setValue("read")
+                .await()
+
+            Result.success(Unit)
+
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
     }
 }
