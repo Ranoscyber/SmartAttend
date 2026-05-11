@@ -6,11 +6,20 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.AccountBalanceWallet
+import androidx.compose.material.icons.rounded.Badge
+import androidx.compose.material.icons.rounded.Business
+import androidx.compose.material.icons.rounded.ErrorOutline
+import androidx.compose.material.icons.rounded.Person
+import androidx.compose.material.icons.rounded.QrCodeScanner
+import androidx.compose.material.icons.rounded.Work
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -60,6 +69,60 @@ private fun EmployeeHomeContent(
     employee: Employee,
     onScanClick: () -> Unit
 ) {
+    EmployeeHeader(employee = employee)
+
+    Spacer(modifier = Modifier.height(28.dp))
+
+    Text(
+        text = "Home",
+        fontSize = 30.sp,
+        fontWeight = FontWeight.Bold,
+        color = MaterialTheme.colorScheme.onSurface
+    )
+
+    Text(
+        text = "Your attendance, profile, and salary overview.",
+        modifier = Modifier.padding(top = 6.dp),
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        fontSize = 14.sp
+    )
+
+    Spacer(modifier = Modifier.height(22.dp))
+
+    CheckInCard(
+        onScanClick = onScanClick
+    )
+
+    Spacer(modifier = Modifier.height(18.dp))
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(14.dp)
+    ) {
+        SmallInfoCard(
+            title = "Employee ID",
+            value = employee.employeeId.ifBlank { "-" },
+            icon = Icons.Rounded.Badge,
+            modifier = Modifier.weight(1f)
+        )
+
+        SmallInfoCard(
+            title = "Department",
+            value = employee.departmentName.ifBlank { "-" },
+            icon = Icons.Rounded.Business,
+            modifier = Modifier.weight(1f)
+        )
+    }
+
+    Spacer(modifier = Modifier.height(18.dp))
+
+    SalaryPreviewCard(employee = employee)
+}
+
+@Composable
+private fun EmployeeHeader(
+    employee: Employee
+) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically
@@ -70,70 +133,81 @@ private fun EmployeeHomeContent(
         )
 
         Column(
-            modifier = Modifier.padding(start = 12.dp)
+            modifier = Modifier
+                .padding(start = 12.dp)
+                .weight(1f)
         ) {
             Text(
-                text = "Hello, ${employee.fullName}",
+                text = "Hello, ${employee.fullName.ifBlank { "Employee" }}",
                 fontSize = 18.sp,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 1
             )
 
             Text(
                 text = employee.position.ifBlank { "Employee" },
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                fontSize = 14.sp
+                fontSize = 14.sp,
+                maxLines = 1
             )
         }
     }
+}
 
-    Spacer(modifier = Modifier.height(26.dp))
-
-    Text(
-        text = "Home",
-        fontSize = 30.sp,
-        fontWeight = FontWeight.Bold
-    )
-
-    Text(
-        text = "Your attendance and salary overview.",
-        modifier = Modifier.padding(top = 6.dp),
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        fontSize = 14.sp
-    )
-
-    Spacer(modifier = Modifier.height(22.dp))
-
+@Composable
+private fun CheckInCard(
+    onScanClick: () -> Unit
+) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(28.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.primary
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 5.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column(
             modifier = Modifier.padding(22.dp)
         ) {
-            Text(
-                text = "Today Attendance",
-                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.86f),
-                fontSize = 14.sp
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Surface(
+                    modifier = Modifier.size(52.dp),
+                    shape = CircleShape,
+                    color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.16f)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            imageVector = Icons.Rounded.QrCodeScanner,
+                            contentDescription = "QR Scanner",
+                            tint = MaterialTheme.colorScheme.onPrimary,
+                            modifier = Modifier.size(30.dp)
+                        )
+                    }
+                }
 
-            Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.width(14.dp))
 
-            Text(
-                text = "Ready to Check In",
-                color = MaterialTheme.colorScheme.onPrimary,
-                fontSize = 26.sp,
-                fontWeight = FontWeight.Bold
-            )
+                Column(
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text(
+                        text = "Ready to Check In",
+                        color = MaterialTheme.colorScheme.onPrimary,
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.Bold
+                    )
 
-            Text(
-                text = "Tap the button below to open QR scanner.",
-                modifier = Modifier.padding(top = 8.dp),
-                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.86f)
-            )
+                    Text(
+                        text = "Scan workplace QR to record attendance.",
+                        modifier = Modifier.padding(top = 4.dp),
+                        color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.82f),
+                        fontSize = 13.sp
+                    )
+                }
+            }
 
             Spacer(modifier = Modifier.height(18.dp))
 
@@ -148,6 +222,13 @@ private fun EmployeeHomeContent(
                     contentColor = MaterialTheme.colorScheme.primary
                 )
             ) {
+                Icon(
+                    imageVector = Icons.Rounded.QrCodeScanner,
+                    contentDescription = "Scan"
+                )
+
+                Spacer(modifier = Modifier.width(8.dp))
+
                 Text(
                     text = "Scan QR to Check In",
                     fontWeight = FontWeight.SemiBold
@@ -155,31 +236,6 @@ private fun EmployeeHomeContent(
             }
         }
     }
-
-    Spacer(modifier = Modifier.height(18.dp))
-
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(14.dp)
-    ) {
-        SmallInfoCard(
-            title = "Employee ID",
-            value = employee.employeeId,
-            emoji = "🪪",
-            modifier = Modifier.weight(1f)
-        )
-
-        SmallInfoCard(
-            title = "Department",
-            value = employee.departmentName.ifBlank { "-" },
-            emoji = "🏢",
-            modifier = Modifier.weight(1f)
-        )
-    }
-
-    Spacer(modifier = Modifier.height(18.dp))
-
-    SalaryPreviewCard(employee = employee)
 }
 
 @Composable
@@ -195,18 +251,51 @@ private fun SalaryPreviewCard(
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        )
     ) {
         Column(
             modifier = Modifier.padding(18.dp)
         ) {
-            Text(
-                text = "Salary Preview",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Surface(
+                    modifier = Modifier.size(44.dp),
+                    shape = CircleShape,
+                    color = MaterialTheme.colorScheme.primaryContainer
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            imageVector = Icons.Rounded.AccountBalanceWallet,
+                            contentDescription = "Salary",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                }
 
-            Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.width(12.dp))
+
+                Column {
+                    Text(
+                        text = "Salary Preview",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+
+                    Text(
+                        text = "Basic calculation from profile data.",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontSize = 13.sp
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(14.dp))
 
             ProfileInfoRow("Base Salary", "$${formatMoney(employee.baseSalary)}")
             ProfileInfoRow("Work Days", employee.workDaysPerMonth.toString())
@@ -244,9 +333,11 @@ fun EmployeeAvatar(
             )
         } else {
             Box(contentAlignment = Alignment.Center) {
-                Text(
-                    text = "👤",
-                    fontSize = (size / 2).sp
+                Icon(
+                    imageVector = Icons.Rounded.Person,
+                    contentDescription = "Employee",
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size((size / 2).dp)
                 )
             }
         }
@@ -257,37 +348,52 @@ fun EmployeeAvatar(
 private fun SmallInfoCard(
     title: String,
     value: String,
-    emoji: String,
+    icon: ImageVector,
     modifier: Modifier = Modifier
 ) {
     Card(
         modifier = modifier.height(132.dp),
         shape = RoundedCornerShape(24.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        )
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(18.dp),
+                .padding(16.dp),
             verticalArrangement = Arrangement.SpaceBetween
         ) {
-            Text(
-                text = emoji,
-                fontSize = 28.sp
-            )
+            Surface(
+                modifier = Modifier.size(42.dp),
+                shape = CircleShape,
+                color = MaterialTheme.colorScheme.primaryContainer
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = title,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(23.dp)
+                    )
+                }
+            }
 
             Column {
                 Text(
                     text = value,
-                    fontSize = 17.sp,
+                    fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
-                    maxLines = 1
+                    maxLines = 1,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
 
                 Text(
                     text = title,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontSize = 13.sp
+                    fontSize = 13.sp,
+                    maxLines = 1
                 )
             }
         }
@@ -315,7 +421,8 @@ fun ProfileInfoRow(
         Text(
             text = value,
             fontWeight = FontWeight.SemiBold,
-            fontSize = 14.sp
+            fontSize = 14.sp,
+            color = MaterialTheme.colorScheme.onSurface
         )
     }
 }
@@ -323,7 +430,9 @@ fun ProfileInfoRow(
 @Composable
 fun LoadingBox() {
     Box(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(32.dp),
         contentAlignment = Alignment.Center
     ) {
         CircularProgressIndicator()
@@ -339,11 +448,23 @@ fun ErrorCard(message: String) {
             containerColor = MaterialTheme.colorScheme.errorContainer
         )
     ) {
-        Text(
-            text = message,
+        Row(
             modifier = Modifier.padding(18.dp),
-            color = MaterialTheme.colorScheme.onErrorContainer
-        )
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.Rounded.ErrorOutline,
+                contentDescription = "Error",
+                tint = MaterialTheme.colorScheme.onErrorContainer
+            )
+
+            Spacer(modifier = Modifier.width(10.dp))
+
+            Text(
+                text = message,
+                color = MaterialTheme.colorScheme.onErrorContainer
+            )
+        }
     }
 }
 
