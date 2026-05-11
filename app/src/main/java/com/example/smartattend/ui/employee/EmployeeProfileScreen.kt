@@ -3,9 +3,12 @@ package com.example.smartattend.ui.employee
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Edit
+import androidx.compose.material.icons.rounded.Lock
+import androidx.compose.material.icons.rounded.Logout
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -20,6 +23,7 @@ import com.example.smartattend.viewmodel.EmployeeViewModel
 @Composable
 fun EmployeeProfileScreen(
     viewModel: EmployeeViewModel,
+    onRequestUpdateClick: () -> Unit,
     onLogoutConfirmed: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -43,7 +47,7 @@ fun EmployeeProfileScreen(
         )
 
         Text(
-            text = "View your employee information.",
+            text = "View and manage your employee information.",
             modifier = Modifier.padding(top = 6.dp),
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -51,14 +55,24 @@ fun EmployeeProfileScreen(
         Spacer(modifier = Modifier.height(24.dp))
 
         when {
-            uiState.isLoading -> LoadingBox()
+            uiState.isLoading -> {
+                LoadingBox()
+            }
 
-            uiState.errorMessage != null -> ErrorCard(
-                message = uiState.errorMessage ?: "Unknown error"
-            )
+            uiState.errorMessage != null -> {
+                ErrorCard(
+                    message = uiState.errorMessage ?: "Unknown error"
+                )
+            }
 
             employee != null -> {
                 EmployeeProfileContent(employee = employee)
+
+                Spacer(modifier = Modifier.height(18.dp))
+
+                ProfileActionCard(
+                    onRequestUpdateClick = onRequestUpdateClick
+                )
 
                 Spacer(modifier = Modifier.height(18.dp))
 
@@ -75,6 +89,13 @@ fun EmployeeProfileScreen(
                         contentColor = MaterialTheme.colorScheme.onErrorContainer
                     )
                 ) {
+                    Icon(
+                        imageVector = Icons.Rounded.Logout,
+                        contentDescription = "Logout"
+                    )
+
+                    Spacer(modifier = Modifier.width(8.dp))
+
                     Text(
                         text = "Logout",
                         fontSize = 16.sp,
@@ -197,6 +218,80 @@ private fun EmployeeProfileContent(
             ProfileInfoRow("Employment Type", employee.employmentType.ifBlank { "-" })
             ProfileInfoRow("Join Date", employee.joinDate.ifBlank { "-" })
             ProfileInfoRow("Status", employee.status.ifBlank { "-" })
+        }
+    }
+}
+
+@Composable
+private fun ProfileActionCard(
+    onRequestUpdateClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(18.dp)
+        ) {
+            Text(
+                text = "Account Actions",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold
+            )
+
+            Text(
+                text = "Request changes to your profile information.",
+                modifier = Modifier.padding(top = 6.dp),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontSize = 14.sp
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            OutlinedButton(
+                onClick = onRequestUpdateClick,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(54.dp),
+                shape = RoundedCornerShape(18.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.Edit,
+                    contentDescription = "Request Update"
+                )
+
+                Spacer(modifier = Modifier.width(8.dp))
+
+                Text(
+                    text = "Request Profile Update",
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            OutlinedButton(
+                onClick = {
+                    // Later: connect to Change Password screen if you want
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(54.dp),
+                shape = RoundedCornerShape(18.dp),
+                enabled = false
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.Lock,
+                    contentDescription = "Change Password"
+                )
+
+                Spacer(modifier = Modifier.width(8.dp))
+
+                Text(
+                    text = "Change Password"
+                )
+            }
         }
     }
 }

@@ -277,4 +277,24 @@ class AdminRepository {
             Result.failure(e)
         }
     }
+
+    suspend fun getEmployeeProfiles(): Result<List<Employee>> {
+        return try {
+            val snapshot = database
+                .child("employees")
+                .get()
+                .await()
+
+            val employees = snapshot.children.mapNotNull {
+                it.getValue(Employee::class.java)
+            }.sortedBy {
+                it.fullName
+            }
+
+            Result.success(employees)
+
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }

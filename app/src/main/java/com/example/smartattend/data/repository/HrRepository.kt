@@ -15,6 +15,7 @@ import com.example.smartattend.data.model.Attendance
 import com.example.smartattend.data.model.FakeLocationAlert
 import com.example.smartattend.data.model.SalaryReport
 import com.example.smartattend.util.DateTimeUtil
+import com.example.smartattend.data.model.ProfileUpdateRequest
 
 class HrRepository {
 
@@ -476,6 +477,106 @@ class HrRepository {
             }
 
             Result.success(reports)
+
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun getEmployeeProfileUpdateRequests(): Result<List<ProfileUpdateRequest>> {
+        return try {
+            val snapshot = database
+                .child("profile_update_requests")
+                .orderByChild("targetApproverRole")
+                .equalTo("hr")
+                .get()
+                .await()
+
+            val requests = snapshot.children.mapNotNull {
+                it.getValue(ProfileUpdateRequest::class.java)
+            }.sortedByDescending {
+                it.createdAt
+            }
+
+            Result.success(requests)
+
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun approveEmployeeProfileUpdateRequest(
+        request: ProfileUpdateRequest
+    ): Result<Unit> {
+        return try {
+            val currentHrUid = auth.currentUser?.uid
+                ?: return Result.failure(Exception("HR user not found"))
+
+            if (request.requestId.isBlank()) {
+                return Result.failure(Exception("Request ID not found"))
+            }
+
+            if (request.employeeId.isBlank()) {
+                return Result.failure(Exception("Employee ID not found"))
+            }
+
+            if (request.requesterUid.isBlank()) {
+                return Result.failure(Exception("Employee user ID not found"))
+            }
+
+            val updates = hashMapOf<String, Any>(
+                "employees/${request.employeeId}/fullName" to request.requestedFullName,
+                "employees/${request.employeeId}/phone" to request.requestedPhone,
+                "employees/${request.employeeId}/gender" to request.requestedGender,
+                "employees/${request.employeeId}/dob" to request.requestedDob,
+                "employees/${request.employeeId}/address" to request.requestedAddress,
+                "employees/${request.employeeId}/emergencyContact" to request.requestedEmergencyContact,
+                "employees/${request.employeeId}/photoUrl" to request.requestedPhotoUrl,
+                "employees/${request.employeeId}/updatedAt" to System.currentTimeMillis(),
+
+                "users/${request.requesterUid}/name" to request.requestedFullName,
+
+                "profile_update_requests/${request.requestId}/status" to "approved",
+                "profile_update_requests/${request.requestId}/reviewedAt" to System.currentTimeMillis(),
+                "profile_update_requests/${request.requestId}/reviewedBy" to currentHrUid,
+                "profile_update_requests/${request.requestId}/rejectReason" to ""
+            )
+
+            database.updateChildren(updates).await()
+
+            Result.success(Unit)
+
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun rejectEmployeeProfileUpdateRequest(
+        requestId: String,
+        rejectReason: String
+    ): Result<Unit> {
+        return try {
+            val currentHrUid = auth.currentUser?.uid
+                ?: return Result.failure(Exception("HR user not found"))
+
+            if (requestId.isBlank()) {
+                return Result.failure(Exception("Request ID not found"))
+            }
+
+            val updates = mapOf<String, Any>(
+                "status" to "rejected",
+                "reviewedAt" to System.currentTimeMillis(),
+                "reviewedBy" to currentHrUid,
+                "rejectReason" to rejectReason.ifBlank { "Rejected by HR" }
+            )
+
+            database
+                .child("profile_update_requests")
+                .child(requestId)
+                .updateChildren(updates)
+                .await()
+
+            Result.success(Unit)
 
         } catch (e: Exception) {
             Result.failure(e)

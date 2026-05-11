@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import com.example.smartattend.data.model.Workplace
 import com.example.smartattend.data.model.SalaryReport
+import com.example.smartattend.data.model.ProfileUpdateRequest
 
 data class HrUiState(
     val isLoading: Boolean = false,
@@ -26,7 +27,8 @@ data class HrUiState(
     val workplace: Workplace? = null,
     val attendanceReports: List<Attendance> = emptyList(),
     val fakeLocationAlerts: List<FakeLocationAlert> = emptyList(),
-    val salaryReports: List<SalaryReport> = emptyList()
+    val salaryReports: List<SalaryReport> = emptyList(),
+    val profileUpdateRequests: List<ProfileUpdateRequest> = emptyList()
 )
 
 class HrViewModel(
@@ -291,12 +293,14 @@ class HrViewModel(
             val attendanceResult = hrRepository.getAttendanceReports()
             val alertsResult = hrRepository.getFakeLocationAlerts()
             val salaryResult = hrRepository.getSalaryReports()
+            val profileRequestsResult = hrRepository.getEmployeeProfileUpdateRequests()
 
             _uiState.value = _uiState.value.copy(
                 isLoading = false,
                 attendanceReports = attendanceResult.getOrDefault(emptyList()),
                 fakeLocationAlerts = alertsResult.getOrDefault(emptyList()),
-                salaryReports = salaryResult.getOrDefault(emptyList())
+                salaryReports = salaryResult.getOrDefault(emptyList()),
+                profileUpdateRequests = profileRequestsResult.getOrDefault(emptyList())
             )
         }
     }
@@ -317,6 +321,68 @@ class HrViewModel(
                 .onFailure { error ->
                     _uiState.value = _uiState.value.copy(
                         errorMessage = error.message ?: "Failed to update alert"
+                    )
+                }
+        }
+    }
+
+    fun approveEmployeeProfileRequest(
+        request: ProfileUpdateRequest
+    ) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(
+                isLoading = true,
+                errorMessage = null,
+                successMessage = null
+            )
+
+            val result = hrRepository.approveEmployeeProfileUpdateRequest(request)
+
+            result
+                .onSuccess {
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        successMessage = "Profile update approved"
+                    )
+                    loadReportData()
+                }
+                .onFailure { error ->
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        errorMessage = error.message ?: "Failed to approve request"
+                    )
+                }
+        }
+    }
+
+    fun rejectEmployeeProfileRequest(
+        requestId: String,
+        rejectReason: String
+    ) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(
+                isLoading = true,
+                errorMessage = null,
+                successMessage = null
+            )
+
+            val result = hrRepository.rejectEmployeeProfileUpdateRequest(
+                requestId = requestId,
+                rejectReason = rejectReason
+            )
+
+            result
+                .onSuccess {
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        successMessage = "Profile update rejected"
+                    )
+                    loadReportData()
+                }
+                .onFailure { error ->
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        errorMessage = error.message ?: "Failed to reject request"
                     )
                 }
         }
