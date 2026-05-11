@@ -1,5 +1,7 @@
 package com.example.smartattend.ui.hr
 
+import com.example.smartattend.ui.common.AppearanceSettingsCard
+import com.example.smartattend.viewmodel.AppSettingsViewModel
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -17,9 +19,12 @@ import androidx.compose.ui.unit.sp
 
 @Composable
 fun HrProfileScreen(
+    appSettingsViewModel: AppSettingsViewModel,
     onLogoutConfirmed: () -> Unit
 ) {
     var showLogoutDialog by remember { mutableStateOf(false) }
+
+    val isDarkMode by appSettingsViewModel.isDarkMode.collectAsState()
 
     Column(
         modifier = Modifier
@@ -84,6 +89,15 @@ fun HrProfileScreen(
                 )
             }
         }
+
+        Spacer(modifier = Modifier.height(18.dp))
+
+        AppearanceSettingsCard(
+            isDarkMode = isDarkMode,
+            onDarkModeChange = { enabled ->
+                appSettingsViewModel.setDarkMode(enabled)
+            }
+        )
 
         Spacer(modifier = Modifier.height(18.dp))
 

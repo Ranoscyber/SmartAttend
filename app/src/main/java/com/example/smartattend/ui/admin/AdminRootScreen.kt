@@ -23,6 +23,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.example.smartattend.viewmodel.AdminViewModel
+import com.example.smartattend.viewmodel.AppSettingsViewModel
 
 private enum class AdminTab(
     val label: String,
@@ -37,6 +38,7 @@ private enum class AdminTab(
 @Composable
 fun AdminRootScreen(
     viewModel: AdminViewModel,
+    appSettingsViewModel: AppSettingsViewModel,
     onAddHrClick: () -> Unit,
     onLogoutClick: () -> Unit
 ) {
@@ -81,6 +83,7 @@ fun AdminRootScreen(
 
                 AdminTab.PROFILE -> {
                     AdminProfileScreen(
+                        appSettingsViewModel = appSettingsViewModel,
                         onLogoutConfirmed = onLogoutClick
                     )
                 }

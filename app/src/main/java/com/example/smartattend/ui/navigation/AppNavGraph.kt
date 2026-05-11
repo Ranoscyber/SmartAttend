@@ -18,9 +18,12 @@ import com.example.smartattend.viewmodel.AttendanceViewModel
 import com.example.smartattend.viewmodel.AuthViewModel
 import com.example.smartattend.viewmodel.EmployeeViewModel
 import com.example.smartattend.viewmodel.HrViewModel
+import com.example.smartattend.viewmodel.AppSettingsViewModel
 
 @Composable
-fun AppNavGraph() {
+fun AppNavGraph(
+    appSettingsViewModel: AppSettingsViewModel
+) {
     val navController: NavHostController = rememberNavController()
 
     val authViewModel: AuthViewModel = viewModel()
@@ -103,6 +106,7 @@ fun AppNavGraph() {
         composable(Routes.ADMIN_DASHBOARD) {
             AdminRootScreen(
                 viewModel = adminViewModel,
+                appSettingsViewModel = appSettingsViewModel,
                 onAddHrClick = {
                     navController.navigate(Routes.ADD_HR)
                 },
@@ -133,6 +137,7 @@ fun AppNavGraph() {
         composable(Routes.HR_DASHBOARD) {
             HrRootScreen(
                 viewModel = hrViewModel,
+                appSettingsViewModel = appSettingsViewModel,
                 onLogoutClick = {
                     authViewModel.logout()
 
@@ -147,6 +152,7 @@ fun AppNavGraph() {
             EmployeeRootScreen(
                 employeeViewModel = employeeViewModel,
                 attendanceViewModel = attendanceViewModel,
+                appSettingsViewModel = appSettingsViewModel,
                 onLogoutClick = {
                     authViewModel.logout()
 
