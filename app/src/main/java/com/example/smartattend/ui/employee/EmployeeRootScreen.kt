@@ -45,6 +45,7 @@ fun EmployeeRootScreen(
     onLogoutClick: () -> Unit
 ) {
     var selectedTab by remember { mutableStateOf(EmployeeTab.HOME) }
+    var showProfileUpdateRequest by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         employeeViewModel.loadEmployeeProfile()
@@ -52,10 +53,26 @@ fun EmployeeRootScreen(
 
     Scaffold(
         bottomBar = {
-            EmployeeBottomBar(
-                selectedTab = selectedTab,
-                onTabSelected = { selectedTab = it }
-            )
+            NavigationBar {
+                EmployeeTab.entries.forEach { tab ->
+                    NavigationBarItem(
+                        selected = selectedTab == tab && !showProfileUpdateRequest,
+                        onClick = {
+                            showProfileUpdateRequest = false
+                            selectedTab = tab
+                        },
+                        icon = {
+                            Icon(
+                                imageVector = tab.icon,
+                                contentDescription = tab.label
+                            )
+                        },
+                        label = {
+                            Text(tab.label)
+                        }
+                    )
+                }
+            }
         }
     ) { paddingValues ->
 
@@ -65,6 +82,16 @@ fun EmployeeRootScreen(
                 .background(MaterialTheme.colorScheme.surfaceVariant)
                 .padding(paddingValues)
         ) {
+            if (showProfileUpdateRequest) {
+                EmployeeProfileUpdateRequestScreen(
+                    viewModel = employeeViewModel,
+                    onBack = {
+                        showProfileUpdateRequest = false
+                    }
+                )
+                return@Box
+            }
+
             when (selectedTab) {
                 EmployeeTab.HOME -> {
                     EmployeeHomeScreen(
@@ -97,36 +124,13 @@ fun EmployeeRootScreen(
                 EmployeeTab.PROFILE -> {
                     EmployeeProfileScreen(
                         viewModel = employeeViewModel,
+                        onRequestUpdateClick = {
+                            showProfileUpdateRequest = true
+                        },
                         onLogoutConfirmed = onLogoutClick
                     )
                 }
             }
-        }
-    }
-}
-
-@Composable
-private fun EmployeeBottomBar(
-    selectedTab: EmployeeTab,
-    onTabSelected: (EmployeeTab) -> Unit
-) {
-    NavigationBar {
-        EmployeeTab.entries.forEach { tab ->
-            NavigationBarItem(
-                selected = selectedTab == tab,
-                onClick = {
-                    onTabSelected(tab)
-                },
-                icon = {
-                    Icon(
-                        imageVector = tab.icon,
-                        contentDescription = tab.label
-                    )
-                },
-                label = {
-                    Text(tab.label)
-                }
-            )
         }
     }
 }

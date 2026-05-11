@@ -13,6 +13,7 @@ import com.example.smartattend.data.model.Attendance
 import com.example.smartattend.data.model.FakeLocationAlert
 import com.example.smartattend.data.model.SalaryReport
 import com.example.smartattend.data.model.HRProfile
+import com.example.smartattend.data.model.Employee
 
 data class AdminUiState(
     val isLoading: Boolean = false,
@@ -24,7 +25,9 @@ data class AdminUiState(
     val hrProfiles: List<HRProfile> = emptyList(),
     val attendanceReports: List<Attendance> = emptyList(),
     val fakeLocationAlerts: List<FakeLocationAlert> = emptyList(),
-    val salaryReports: List<SalaryReport> = emptyList()
+    val salaryReports: List<SalaryReport> = emptyList(),
+
+    val employeeProfiles: List<Employee> = emptyList(),
 )
 
 class AdminViewModel(
@@ -183,6 +186,29 @@ class AdminViewModel(
                         errorMessage = error.message ?: "Failed to load HR list"
                     )
                 }
+        }
+    }
+
+    fun loadPeopleData() {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(
+                isLoading = true,
+                errorMessage = null
+            )
+
+            val hrResult = adminRepository.getHrProfiles()
+            val employeeResult = adminRepository.getEmployeeProfiles()
+
+            val hrProfiles = hrResult.getOrDefault(emptyList())
+            val employeeProfiles = employeeResult.getOrDefault(emptyList())
+
+            _uiState.value = _uiState.value.copy(
+                isLoading = false,
+                hrProfiles = hrProfiles,
+                employeeProfiles = employeeProfiles,
+                totalHr = hrProfiles.size,
+                totalEmployees = employeeProfiles.size
+            )
         }
     }
 }

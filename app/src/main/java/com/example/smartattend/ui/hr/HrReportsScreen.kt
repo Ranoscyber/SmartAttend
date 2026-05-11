@@ -67,15 +67,21 @@ fun HrReportsScreen(
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        TabRow(
+        ScrollableTabRow(
             selectedTabIndex = selectedTab,
             containerColor = MaterialTheme.colorScheme.surface,
-            contentColor = MaterialTheme.colorScheme.primary
+            contentColor = MaterialTheme.colorScheme.primary,
+            edgePadding = 12.dp
         ) {
             Tab(
                 selected = selectedTab == 0,
                 onClick = { selectedTab = 0 },
-                text = { Text("Attendance") }
+                text = {
+                    Text(
+                        text = "Attendance",
+                        maxLines = 1
+                    )
+                }
             )
 
             Tab(
@@ -83,7 +89,8 @@ fun HrReportsScreen(
                 onClick = { selectedTab = 1 },
                 text = {
                     Text(
-                        text = "Alerts (${uiState.fakeLocationAlerts.count { it.status == "unread" }})"
+                        text = "Alerts (${uiState.fakeLocationAlerts.count { it.status == "unread" }})",
+                        maxLines = 1
                     )
                 }
             )
@@ -91,7 +98,23 @@ fun HrReportsScreen(
             Tab(
                 selected = selectedTab == 2,
                 onClick = { selectedTab = 2 },
-                text = { Text("Salary") }
+                text = {
+                    Text(
+                        text = "Salary",
+                        maxLines = 1
+                    )
+                }
+            )
+
+            Tab(
+                selected = selectedTab == 3,
+                onClick = { selectedTab = 3 },
+                text = {
+                    Text(
+                        text = "Requests (${uiState.profileUpdateRequests.count { it.status == "pending" }})",
+                        maxLines = 1
+                    )
+                }
             )
         }
 
@@ -124,6 +147,20 @@ fun HrReportsScreen(
 
                 2 -> HrSalaryReportContent(
                     reports = uiState.salaryReports
+                )
+
+                3 -> HrProfileRequestsContent(
+                    requests = uiState.profileUpdateRequests,
+                    isLoading = uiState.isLoading,
+                    onApprove = { request ->
+                        viewModel.approveEmployeeProfileRequest(request)
+                    },
+                    onReject = { requestId, reason ->
+                        viewModel.rejectEmployeeProfileRequest(
+                            requestId = requestId,
+                            rejectReason = reason
+                        )
+                    }
                 )
             }
         }
