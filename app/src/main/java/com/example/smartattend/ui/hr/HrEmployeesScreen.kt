@@ -123,7 +123,9 @@ fun HrEmployeesScreen(
     if (showDobPicker) {
         AppDatePickerDialog(
             title = "Select Date of Birth",
-            onDismiss = { showDobPicker = false },
+            onDismiss = {
+                showDobPicker = false
+            },
             onDateSelected = { selectedDate ->
                 dob = selectedDate
                 showDobPicker = false
@@ -135,7 +137,9 @@ fun HrEmployeesScreen(
     if (showJoinDatePicker) {
         AppDatePickerDialog(
             title = "Select Join Date",
-            onDismiss = { showJoinDatePicker = false },
+            onDismiss = {
+                showJoinDatePicker = false
+            },
             onDateSelected = { selectedDate ->
                 joinDate = selectedDate
                 showJoinDatePicker = false
@@ -144,22 +148,18 @@ fun HrEmployeesScreen(
         )
     }
 
-    Scaffold(
-        snackbarHost = {
-            SnackbarHost(hostState = snackbarHostState)
-        }
-    ) { paddingValues ->
-
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.surfaceVariant)
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(MaterialTheme.colorScheme.surfaceVariant)
-                .padding(paddingValues)
                 .statusBarsPadding()
-                .navigationBarsPadding()
                 .verticalScroll(rememberScrollState())
-                .padding(20.dp)
-                .padding(bottom = 24.dp)
+                .padding(horizontal = 20.dp, vertical = 18.dp)
+                .padding(bottom = 96.dp)
         ) {
             Text(
                 text = "Employees",
@@ -236,7 +236,9 @@ fun HrEmployeesScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(top = 14.dp),
-                        label = { Text("Temporary Password *") },
+                        label = {
+                            Text("Temporary Password *")
+                        },
                         singleLine = true,
                         visualTransformation = PasswordVisualTransformation(),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
@@ -249,7 +251,9 @@ fun HrEmployeesScreen(
 
                     ExposedDropdownMenuBox(
                         expanded = expandedDepartment,
-                        onExpandedChange = { expandedDepartment = !expandedDepartment }
+                        onExpandedChange = {
+                            expandedDepartment = !expandedDepartment
+                        }
                     ) {
                         OutlinedTextField(
                             value = selectedDepartment?.name ?: "",
@@ -258,7 +262,9 @@ fun HrEmployeesScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .menuAnchor(),
-                            label = { Text("Department *") },
+                            label = {
+                                Text("Department *")
+                            },
                             trailingIcon = {
                                 ExposedDropdownMenuDefaults.TrailingIcon(
                                     expanded = expandedDepartment
@@ -269,11 +275,15 @@ fun HrEmployeesScreen(
 
                         ExposedDropdownMenu(
                             expanded = expandedDepartment,
-                            onDismissRequest = { expandedDepartment = false }
+                            onDismissRequest = {
+                                expandedDepartment = false
+                            }
                         ) {
                             uiState.departments.forEach { department ->
                                 DropdownMenuItem(
-                                    text = { Text(department.name) },
+                                    text = {
+                                        Text(department.name)
+                                    },
                                     onClick = {
                                         selectedDepartment = department
                                         expandedDepartment = false
@@ -298,7 +308,9 @@ fun HrEmployeesScreen(
                         value = employmentType,
                         expanded = expandedEmploymentType,
                         options = listOf("Full-time", "Part-time"),
-                        onExpandedChange = { expandedEmploymentType = it },
+                        onExpandedChange = {
+                            expandedEmploymentType = it
+                        },
                         onSelected = {
                             employmentType = it
                             expandedEmploymentType = false
@@ -344,7 +356,10 @@ fun HrEmployeesScreen(
 
                     InputField(
                         value = phone,
-                        onValueChange = { phone = it },
+                        onValueChange = {
+                            phone = it
+                            viewModel.clearMessages()
+                        },
                         label = "Phone Optional",
                         keyboardType = KeyboardType.Phone
                     )
@@ -354,7 +369,9 @@ fun HrEmployeesScreen(
                         value = gender,
                         expanded = expandedGender,
                         options = listOf("Male", "Female"),
-                        onExpandedChange = { expandedGender = it },
+                        onExpandedChange = {
+                            expandedGender = it
+                        },
                         onSelected = {
                             gender = it
                             expandedGender = false
@@ -372,13 +389,19 @@ fun HrEmployeesScreen(
 
                     InputField(
                         value = address,
-                        onValueChange = { address = it },
+                        onValueChange = {
+                            address = it
+                            viewModel.clearMessages()
+                        },
                         label = "Address Optional"
                     )
 
                     InputField(
                         value = emergencyContact,
-                        onValueChange = { emergencyContact = it },
+                        onValueChange = {
+                            emergencyContact = it
+                            viewModel.clearMessages()
+                        },
                         label = "Emergency Contact Optional",
                         keyboardType = KeyboardType.Phone
                     )
@@ -434,6 +457,14 @@ fun HrEmployeesScreen(
                 }
             }
         }
+
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(horizontal = 16.dp)
+                .padding(bottom = 16.dp)
+        )
     }
 }
 
@@ -462,7 +493,9 @@ private fun InputField(
         modifier = Modifier
             .fillMaxWidth()
             .padding(top = 14.dp),
-        label = { Text(label) },
+        label = {
+            Text(label)
+        },
         singleLine = true,
         keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
         shape = RoundedCornerShape(16.dp)
@@ -491,7 +524,9 @@ private fun SimpleDropdownField(
             modifier = Modifier
                 .fillMaxWidth()
                 .menuAnchor(),
-            label = { Text(label) },
+            label = {
+                Text(label)
+            },
             trailingIcon = {
                 ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
             },
@@ -500,12 +535,18 @@ private fun SimpleDropdownField(
 
         ExposedDropdownMenu(
             expanded = expanded,
-            onDismissRequest = { onExpandedChange(false) }
+            onDismissRequest = {
+                onExpandedChange(false)
+            }
         ) {
             options.forEach { option ->
                 DropdownMenuItem(
-                    text = { Text(option) },
-                    onClick = { onSelected(option) }
+                    text = {
+                        Text(option)
+                    },
+                    onClick = {
+                        onSelected(option)
+                    }
                 )
             }
         }
@@ -522,13 +563,17 @@ private fun ReadOnlyDateField(
         modifier = Modifier
             .fillMaxWidth()
             .padding(top = 14.dp)
-            .clickable { onClick() }
+            .clickable {
+                onClick()
+            }
     ) {
         OutlinedTextField(
             value = value,
             onValueChange = {},
             modifier = Modifier.fillMaxWidth(),
-            label = { Text(label) },
+            label = {
+                Text(label)
+            },
             readOnly = true,
             enabled = false,
             shape = RoundedCornerShape(16.dp),
@@ -557,6 +602,7 @@ private fun AppDatePickerDialog(
             TextButton(
                 onClick = {
                     val millis = datePickerState.selectedDateMillis
+
                     if (millis != null) {
                         onDateSelected(formatDate(millis))
                     }
@@ -606,7 +652,9 @@ private fun EmployeeImagePicker(
                 color = MaterialTheme.colorScheme.primary.copy(alpha = 0.35f),
                 shape = CircleShape
             )
-            .clickable { onPickImage() },
+            .clickable {
+                onPickImage()
+            },
         contentAlignment = Alignment.Center
     ) {
         if (imageUri != null) {

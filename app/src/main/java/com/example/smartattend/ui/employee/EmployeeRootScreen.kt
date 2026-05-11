@@ -26,6 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.example.smartattend.viewmodel.AttendanceViewModel
 import com.example.smartattend.viewmodel.EmployeeViewModel
+import com.example.smartattend.viewmodel.AppSettingsViewModel
 
 private enum class EmployeeTab(
     val label: String,
@@ -42,6 +43,7 @@ private enum class EmployeeTab(
 fun EmployeeRootScreen(
     employeeViewModel: EmployeeViewModel,
     attendanceViewModel: AttendanceViewModel,
+    appSettingsViewModel: AppSettingsViewModel,
     onLogoutClick: () -> Unit
 ) {
     var selectedTab by remember { mutableStateOf(EmployeeTab.HOME) }
@@ -124,6 +126,7 @@ fun EmployeeRootScreen(
                 EmployeeTab.PROFILE -> {
                     EmployeeProfileScreen(
                         viewModel = employeeViewModel,
+                        appSettingsViewModel = appSettingsViewModel,
                         onRequestUpdateClick = {
                             showProfileUpdateRequest = true
                         },

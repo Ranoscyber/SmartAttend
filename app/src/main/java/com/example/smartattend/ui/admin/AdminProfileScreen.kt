@@ -14,12 +14,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.smartattend.ui.common.AppearanceSettingsCard
+import com.example.smartattend.viewmodel.AppSettingsViewModel
 
 @Composable
 fun AdminProfileScreen(
+    appSettingsViewModel: AppSettingsViewModel,
     onLogoutConfirmed: () -> Unit
 ) {
     var showLogoutDialog by remember { mutableStateOf(false) }
+    val isDarkMode by appSettingsViewModel.isDarkMode.collectAsState()
 
     Column(
         modifier = Modifier
@@ -106,6 +110,15 @@ fun AdminProfileScreen(
 
         Spacer(modifier = Modifier.height(18.dp))
 
+
+        AppearanceSettingsCard(
+            isDarkMode = isDarkMode,
+            onDarkModeChange = { enabled ->
+                appSettingsViewModel.setDarkMode(enabled)
+            }
+        )
+
+        Spacer(modifier = Modifier.height(18.dp))
 
         Button(
             onClick = {
