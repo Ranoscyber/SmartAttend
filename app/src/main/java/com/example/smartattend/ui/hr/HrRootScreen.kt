@@ -63,7 +63,15 @@ fun HrRootScreen(
         ) {
             when (selectedTab) {
                 HrTab.DASHBOARD -> {
-                    HrDashboardScreen(viewModel = viewModel)
+                    HrDashboardScreen(
+                        viewModel = viewModel,
+                        onDepartmentClick = {
+                            selectedTab = HrTab.DEPARTMENTS
+                        },
+                        onStaffClick = {
+                            selectedTab = HrTab.EMPLOYEES
+                        }
+                    )
                 }
 
                 HrTab.WORKPLACE -> {
