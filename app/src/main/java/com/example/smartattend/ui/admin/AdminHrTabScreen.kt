@@ -1,17 +1,44 @@
 package com.example.smartattend.ui.admin
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Badge
+import androidx.compose.material.icons.rounded.Business
+import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.Email
 import androidx.compose.material.icons.rounded.Groups
+import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.PersonAdd
+import androidx.compose.material.icons.rounded.Phone
+import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Work
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Divider
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -19,6 +46,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import coil.compose.AsyncImage
 import com.example.smartattend.data.model.Employee
 import com.example.smartattend.data.model.HRProfile
@@ -32,13 +60,39 @@ private enum class AdminPeopleTab {
 @Composable
 fun AdminHrTabScreen(
     viewModel: AdminViewModel,
+    startWithEmployees: Boolean = false,
     onAddHrClick: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    var selectedTab by remember { mutableStateOf(AdminPeopleTab.HR) }
+
+    var selectedTab by remember(startWithEmployees) {
+        mutableStateOf(
+            if (startWithEmployees) AdminPeopleTab.EMPLOYEE else AdminPeopleTab.HR
+        )
+    }
+
+    var searchQuery by remember { mutableStateOf("") }
+    var selectedHr by remember { mutableStateOf<HRProfile?>(null) }
+    var selectedEmployee by remember { mutableStateOf<Employee?>(null) }
 
     LaunchedEffect(Unit) {
         viewModel.loadPeopleData()
+    }
+
+    val filteredHr = uiState.hrProfiles.filter { hr ->
+        searchQuery.isBlank() ||
+                hr.fullName.contains(searchQuery, ignoreCase = true) ||
+                hr.email.contains(searchQuery, ignoreCase = true) ||
+                hr.phone.contains(searchQuery, ignoreCase = true)
+    }
+
+    val filteredEmployees = uiState.employeeProfiles.filter { employee ->
+        searchQuery.isBlank() ||
+                employee.fullName.contains(searchQuery, ignoreCase = true) ||
+                employee.email.contains(searchQuery, ignoreCase = true) ||
+                employee.employeeId.contains(searchQuery, ignoreCase = true) ||
+                employee.departmentName.contains(searchQuery, ignoreCase = true) ||
+                employee.position.contains(searchQuery, ignoreCase = true)
     }
 
     Column(
@@ -47,13 +101,14 @@ fun AdminHrTabScreen(
             .background(MaterialTheme.colorScheme.surfaceVariant)
             .statusBarsPadding()
             .verticalScroll(rememberScrollState())
-            .padding(20.dp)
+            .padding(horizontal = 20.dp, vertical = 18.dp)
             .padding(bottom = 32.dp)
     ) {
         Text(
             text = "People Management",
             fontSize = 30.sp,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface
         )
 
         Text(
@@ -63,7 +118,7 @@ fun AdminHrTabScreen(
             fontSize = 14.sp
         )
 
-        Spacer(modifier = Modifier.height(22.dp))
+        Spacer(modifier = Modifier.height(20.dp))
 
         PeopleSwitchCard(
             selectedTab = selectedTab,
@@ -71,17 +126,30 @@ fun AdminHrTabScreen(
             employeeCount = uiState.employeeProfiles.size,
             onTabSelected = {
                 selectedTab = it
+                searchQuery = ""
+            }
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        SearchBox(
+            value = searchQuery,
+            onValueChange = {
+                searchQuery = it
+            },
+            placeholder = if (selectedTab == AdminPeopleTab.HR) {
+                "Search HR by name, email, phone"
+            } else {
+                "Search employee by name, ID, department"
             }
         )
 
         Spacer(modifier = Modifier.height(18.dp))
 
         if (selectedTab == AdminPeopleTab.HR) {
-            CreateHrCard(
-                onAddHrClick = onAddHrClick
-            )
+            CreateHrMiniCard(onAddHrClick = onAddHrClick)
 
-            Spacer(modifier = Modifier.height(22.dp))
+            Spacer(modifier = Modifier.height(18.dp))
         }
 
         Row(
@@ -89,14 +157,11 @@ fun AdminHrTabScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = if (selectedTab == AdminPeopleTab.HR) {
-                    "HR List"
-                } else {
-                    "Employee List"
-                },
+                text = if (selectedTab == AdminPeopleTab.HR) "HR List" else "Employee List",
                 modifier = Modifier.weight(1f),
                 fontSize = 20.sp,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
             )
 
             TextButton(
@@ -108,7 +173,7 @@ fun AdminHrTabScreen(
             }
         }
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(10.dp))
 
         when {
             uiState.isLoading -> {
@@ -122,31 +187,57 @@ fun AdminHrTabScreen(
             }
 
             selectedTab == AdminPeopleTab.HR -> {
-                if (uiState.hrProfiles.isEmpty()) {
+                if (filteredHr.isEmpty()) {
                     EmptyPeopleCard(
-                        title = "No HR accounts yet",
-                        subtitle = "Create your first HR account to show it here."
+                        title = "No HR accounts found",
+                        subtitle = "Create or search another HR account."
                     )
                 } else {
-                    uiState.hrProfiles.forEach { hr ->
-                        HrListItem(hr = hr)
+                    filteredHr.forEach { hr ->
+                        HrCompactCard(
+                            hr = hr,
+                            onClick = {
+                                selectedHr = hr
+                            }
+                        )
                     }
                 }
             }
 
             selectedTab == AdminPeopleTab.EMPLOYEE -> {
-                if (uiState.employeeProfiles.isEmpty()) {
+                if (filteredEmployees.isEmpty()) {
                     EmptyPeopleCard(
-                        title = "No employees yet",
+                        title = "No employees found",
                         subtitle = "Employees created by HR will show here."
                     )
                 } else {
-                    uiState.employeeProfiles.forEach { employee ->
-                        EmployeeListItem(employee = employee)
-                    }
+                    EmployeeGroupedByDepartment(
+                        employees = filteredEmployees,
+                        onEmployeeClick = {
+                            selectedEmployee = it
+                        }
+                    )
                 }
             }
         }
+    }
+
+    selectedHr?.let { hr ->
+        HrDetailDialog(
+            hr = hr,
+            onDismiss = {
+                selectedHr = null
+            }
+        )
+    }
+
+    selectedEmployee?.let { employee ->
+        EmployeeDetailDialog(
+            employee = employee,
+            onDismiss = {
+                selectedEmployee = null
+            }
+        )
     }
 }
 
@@ -159,11 +250,14 @@ private fun PeopleSwitchCard(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(26.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 5.dp)
+        shape = RoundedCornerShape(24.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        )
     ) {
         Column(
-            modifier = Modifier.padding(18.dp)
+            modifier = Modifier.padding(16.dp)
         ) {
             Text(
                 text = "View Accounts",
@@ -172,17 +266,17 @@ private fun PeopleSwitchCard(
             )
 
             Text(
-                text = "Switch between HR and Employee accounts.",
+                text = "Switch between HR and employees.",
                 modifier = Modifier.padding(top = 4.dp),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontSize = 14.sp
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(14.dp))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 FilterChip(
                     selected = selectedTab == AdminPeopleTab.HR,
@@ -207,12 +301,12 @@ private fun PeopleSwitchCard(
                         onTabSelected(AdminPeopleTab.EMPLOYEE)
                     },
                     label = {
-                        Text("Employees ($employeeCount)")
+                        Text("Staff ($employeeCount)")
                     },
                     leadingIcon = {
                         Icon(
                             imageVector = Icons.Rounded.Work,
-                            contentDescription = "Employees"
+                            contentDescription = "Staff"
                         )
                     },
                     modifier = Modifier.weight(1f)
@@ -223,114 +317,144 @@ private fun PeopleSwitchCard(
 }
 
 @Composable
-private fun CreateHrCard(
+private fun SearchBox(
+    value: String,
+    onValueChange: (String) -> Unit,
+    placeholder: String
+) {
+    OutlinedTextField(
+        value = value,
+        onValueChange = onValueChange,
+        modifier = Modifier.fillMaxWidth(),
+        leadingIcon = {
+            Icon(
+                imageVector = Icons.Rounded.Search,
+                contentDescription = "Search"
+            )
+        },
+        placeholder = {
+            Text(placeholder)
+        },
+        singleLine = true,
+        shape = RoundedCornerShape(18.dp)
+    )
+}
+
+@Composable
+private fun CreateHrMiniCard(
     onAddHrClick: () -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(26.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 5.dp)
+        shape = RoundedCornerShape(22.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer
+        )
     ) {
-        Column(
-            modifier = Modifier.padding(22.dp)
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically
+            Surface(
+                modifier = Modifier.size(44.dp),
+                shape = CircleShape,
+                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.7f)
             ) {
-                Icon(
-                    imageVector = Icons.Rounded.PersonAdd,
-                    contentDescription = "Create HR",
-                    tint = MaterialTheme.colorScheme.primary
-                )
-
-                Spacer(modifier = Modifier.width(10.dp))
-
-                Text(
-                    text = "Create New HR",
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold
-                )
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(
+                        imageVector = Icons.Rounded.PersonAdd,
+                        contentDescription = "Create HR",
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
             }
 
-            Text(
-                text = "Add a new HR account with email and temporary password.",
-                modifier = Modifier.padding(top = 8.dp),
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            Spacer(modifier = Modifier.width(12.dp))
 
-            Spacer(modifier = Modifier.height(18.dp))
-
-            Button(
-                onClick = onAddHrClick,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(54.dp),
-                shape = RoundedCornerShape(18.dp)
+            Column(
+                modifier = Modifier.weight(1f)
             ) {
                 Text(
                     text = "Create HR Account",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.SemiBold
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
                 )
+
+                Text(
+                    text = "Add HR with secure access.",
+                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.75f),
+                    fontSize = 13.sp
+                )
+            }
+
+            Button(
+                onClick = onAddHrClick,
+                shape = RoundedCornerShape(14.dp)
+            ) {
+                Text("Create")
             }
         }
     }
 }
 
 @Composable
-private fun HrListItem(
-    hr: HRProfile
+private fun HrCompactCard(
+    hr: HRProfile,
+    onClick: () -> Unit
 ) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(bottom = 12.dp),
-        shape = RoundedCornerShape(24.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
+            .padding(bottom = 10.dp)
+            .clickable { onClick() },
+        shape = RoundedCornerShape(20.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        )
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(18.dp),
+                .padding(14.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             PeopleAvatar(
                 photoUrl = hr.photoUrl,
-                fallbackText = hr.fullName.firstOrNull()?.uppercase() ?: "H"
+                fallbackText = hr.fullName.firstOrNull()?.uppercase() ?: "H",
+                size = 48
             )
 
-            Spacer(modifier = Modifier.width(14.dp))
+            Spacer(modifier = Modifier.width(12.dp))
 
             Column(
                 modifier = Modifier.weight(1f)
             ) {
                 Text(
                     text = hr.fullName.ifBlank { "Unnamed HR" },
-                    fontSize = 17.sp,
-                    fontWeight = FontWeight.Bold
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1
                 )
 
                 Text(
                     text = hr.email.ifBlank { "-" },
-                    modifier = Modifier.padding(top = 3.dp),
+                    modifier = Modifier.padding(top = 2.dp),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontSize = 14.sp
+                    fontSize = 13.sp,
+                    maxLines = 1
                 )
-
-                if (hr.phone.isNotBlank()) {
-                    Text(
-                        text = hr.phone,
-                        modifier = Modifier.padding(top = 3.dp),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontSize = 14.sp
-                    )
-                }
             }
 
             AssistChip(
                 onClick = {},
                 label = {
-                    Text(hr.status.ifBlank { "active" })
+                    Text(
+                        text = hr.status.ifBlank { "active" },
+                        fontSize = 12.sp
+                    )
                 }
             )
         }
@@ -338,83 +462,129 @@ private fun HrListItem(
 }
 
 @Composable
-private fun EmployeeListItem(
-    employee: Employee
+private fun EmployeeGroupedByDepartment(
+    employees: List<Employee>,
+    onEmployeeClick: (Employee) -> Unit
+) {
+    val groupedEmployees = employees
+        .groupBy { employee ->
+            employee.departmentName.ifBlank { "No Department" }
+        }
+        .toSortedMap()
+
+    groupedEmployees.forEach { (departmentName, departmentEmployees) ->
+        DepartmentHeader(
+            departmentName = departmentName,
+            count = departmentEmployees.size
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        departmentEmployees.forEach { employee ->
+            EmployeeCompactCard(
+                employee = employee,
+                onClick = {
+                    onEmployeeClick(employee)
+                }
+            )
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+    }
+}
+
+@Composable
+private fun DepartmentHeader(
+    departmentName: String,
+    count: Int
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 6.dp, bottom = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            imageVector = Icons.Rounded.Business,
+            contentDescription = "Department",
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(20.dp)
+        )
+
+        Spacer(modifier = Modifier.width(8.dp))
+
+        Text(
+            text = departmentName,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.weight(1f)
+        )
+
+        Text(
+            text = "$count",
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            fontSize = 13.sp
+        )
+    }
+}
+
+@Composable
+private fun EmployeeCompactCard(
+    employee: Employee,
+    onClick: () -> Unit
 ) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(bottom = 12.dp),
-        shape = RoundedCornerShape(24.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
+            .padding(bottom = 10.dp)
+            .clickable { onClick() },
+        shape = RoundedCornerShape(20.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        )
     ) {
-        Column(
-            modifier = Modifier.padding(18.dp)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(14.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
+            PeopleAvatar(
+                photoUrl = employee.photoUrl,
+                fallbackText = employee.fullName.firstOrNull()?.uppercase() ?: "E",
+                size = 48
+            )
+
+            Spacer(modifier = Modifier.width(12.dp))
+
+            Column(
+                modifier = Modifier.weight(1f)
             ) {
-                PeopleAvatar(
-                    photoUrl = employee.photoUrl,
-                    fallbackText = employee.fullName.firstOrNull()?.uppercase() ?: "E"
+                Text(
+                    text = employee.fullName.ifBlank { "Unnamed Employee" },
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1
                 )
 
-                Spacer(modifier = Modifier.width(14.dp))
-
-                Column(
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Text(
-                        text = employee.fullName.ifBlank { "Unnamed Employee" },
-                        fontSize = 17.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-
-                    Text(
-                        text = employee.email.ifBlank { "-" },
-                        modifier = Modifier.padding(top = 3.dp),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontSize = 14.sp
-                    )
-
-                    Text(
-                        text = employee.employeeId.ifBlank { "-" },
-                        modifier = Modifier.padding(top = 3.dp),
-                        color = MaterialTheme.colorScheme.primary,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                }
-
-                AssistChip(
-                    onClick = {},
-                    label = {
-                        Text(employee.status.ifBlank { "active" })
-                    }
+                Text(
+                    text = "${employee.employeeId.ifBlank { "-" }} • ${employee.position.ifBlank { "-" }}",
+                    modifier = Modifier.padding(top = 2.dp),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontSize = 13.sp,
+                    maxLines = 1
                 )
             }
 
-            Spacer(modifier = Modifier.height(14.dp))
-
-            PeopleInfoRow(
-                label = "Department",
-                value = employee.departmentName.ifBlank { "-" }
-            )
-
-            PeopleInfoRow(
-                label = "Position",
-                value = employee.position.ifBlank { "-" }
-            )
-
-            PeopleInfoRow(
-                label = "Employment Type",
-                value = employee.employmentType.ifBlank { "-" }
-            )
-
-            PeopleInfoRow(
-                label = "Base Salary",
-                value = "$${formatMoney(employee.baseSalary)}"
+            AssistChip(
+                onClick = {},
+                label = {
+                    Text(
+                        text = employee.status.ifBlank { "active" },
+                        fontSize = 12.sp
+                    )
+                }
             )
         }
     }
@@ -423,10 +593,11 @@ private fun EmployeeListItem(
 @Composable
 private fun PeopleAvatar(
     photoUrl: String,
-    fallbackText: String
+    fallbackText: String,
+    size: Int
 ) {
     Surface(
-        modifier = Modifier.size(56.dp),
+        modifier = Modifier.size(size.dp),
         shape = CircleShape,
         color = MaterialTheme.colorScheme.primaryContainer
     ) {
@@ -445,7 +616,7 @@ private fun PeopleAvatar(
                     text = fallbackText,
                     color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.Bold,
-                    fontSize = 22.sp
+                    fontSize = (size / 2.4).sp
                 )
             }
         }
@@ -453,7 +624,187 @@ private fun PeopleAvatar(
 }
 
 @Composable
-private fun PeopleInfoRow(
+private fun HrDetailDialog(
+    hr: HRProfile,
+    onDismiss: () -> Unit
+) {
+    Dialog(onDismissRequest = onDismiss) {
+        DetailSurface {
+            DetailHeader(
+                photoUrl = hr.photoUrl,
+                fallbackText = hr.fullName.firstOrNull()?.uppercase() ?: "H",
+                title = hr.fullName.ifBlank { "Unnamed HR" },
+                subtitle = "HR Account",
+                status = hr.status.ifBlank { "active" },
+                onDismiss = onDismiss
+            )
+
+            Spacer(modifier = Modifier.height(18.dp))
+
+            DetailRow("Email", hr.email.ifBlank { "-" }, Icons.Rounded.Email)
+            DetailRow("Phone", hr.phone.ifBlank { "-" }, Icons.Rounded.Phone)
+            DetailRow("Gender", hr.gender.ifBlank { "-" }, Icons.Rounded.Person)
+            DetailRow("Address", hr.address.ifBlank { "-" }, Icons.Rounded.Business)
+        }
+    }
+}
+
+@Composable
+private fun EmployeeDetailDialog(
+    employee: Employee,
+    onDismiss: () -> Unit
+) {
+    Dialog(onDismissRequest = onDismiss) {
+        DetailSurface {
+            DetailHeader(
+                photoUrl = employee.photoUrl,
+                fallbackText = employee.fullName.firstOrNull()?.uppercase() ?: "E",
+                title = employee.fullName.ifBlank { "Unnamed Employee" },
+                subtitle = employee.employeeId.ifBlank { "Employee" },
+                status = employee.status.ifBlank { "active" },
+                onDismiss = onDismiss
+            )
+
+            Spacer(modifier = Modifier.height(18.dp))
+
+            DetailRow("Email", employee.email.ifBlank { "-" }, Icons.Rounded.Email)
+            DetailRow("Phone", employee.phone.ifBlank { "-" }, Icons.Rounded.Phone)
+            DetailRow("Department", employee.departmentName.ifBlank { "-" }, Icons.Rounded.Business)
+            DetailRow("Position", employee.position.ifBlank { "-" }, Icons.Rounded.Work)
+            DetailRow("Employment Type", employee.employmentType.ifBlank { "-" }, Icons.Rounded.Badge)
+            DetailRow("Join Date", employee.joinDate.ifBlank { "-" }, Icons.Rounded.Badge)
+
+            Divider(modifier = Modifier.padding(vertical = 14.dp))
+
+            DetailTextRow("Base Salary", "$${formatMoney(employee.baseSalary)}")
+            DetailTextRow("Work Days", employee.workDaysPerMonth.toString())
+            DetailTextRow("Gender", employee.gender.ifBlank { "-" })
+            DetailTextRow("Date of Birth", employee.dob.ifBlank { "-" })
+            DetailTextRow("Address", employee.address.ifBlank { "-" })
+            DetailTextRow("Emergency Contact", employee.emergencyContact.ifBlank { "-" })
+        }
+    }
+}
+
+@Composable
+private fun DetailSurface(
+    content: @Composable ColumnScope.() -> Unit
+) {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(10.dp),
+        shape = RoundedCornerShape(28.dp),
+        color = MaterialTheme.colorScheme.surface,
+        tonalElevation = 8.dp
+    ) {
+        Column(
+            modifier = Modifier
+                .verticalScroll(rememberScrollState())
+                .padding(22.dp),
+            content = content
+        )
+    }
+}
+
+@Composable
+private fun DetailHeader(
+    photoUrl: String,
+    fallbackText: String,
+    title: String,
+    subtitle: String,
+    status: String,
+    onDismiss: () -> Unit
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        PeopleAvatar(
+            photoUrl = photoUrl,
+            fallbackText = fallbackText,
+            size = 64
+        )
+
+        Spacer(modifier = Modifier.width(14.dp))
+
+        Column(
+            modifier = Modifier.weight(1f)
+        ) {
+            Text(
+                text = title,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                maxLines = 1
+            )
+
+            Text(
+                text = subtitle,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontSize = 14.sp,
+                maxLines = 1
+            )
+
+            AssistChip(
+                onClick = {},
+                label = {
+                    Text(status)
+                },
+                modifier = Modifier.padding(top = 6.dp)
+            )
+        }
+
+        IconButton(
+            onClick = onDismiss
+        ) {
+            Icon(
+                imageVector = Icons.Rounded.Close,
+                contentDescription = "Close"
+            )
+        }
+    }
+}
+
+@Composable
+private fun DetailRow(
+    label: String,
+    value: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 7.dp),
+        verticalAlignment = Alignment.Top
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = label,
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(22.dp)
+        )
+
+        Spacer(modifier = Modifier.width(12.dp))
+
+        Column(
+            modifier = Modifier.weight(1f)
+        ) {
+            Text(
+                text = label,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontSize = 13.sp
+            )
+
+            Text(
+                text = value,
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 15.sp
+            )
+        }
+    }
+}
+
+@Composable
+private fun DetailTextRow(
     label: String,
     value: String
 ) {
@@ -461,7 +812,7 @@ private fun PeopleInfoRow(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 5.dp),
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.Top
     ) {
         Text(
             text = label,
@@ -472,6 +823,7 @@ private fun PeopleInfoRow(
 
         Text(
             text = value,
+            modifier = Modifier.weight(1.2f),
             fontWeight = FontWeight.SemiBold,
             fontSize = 14.sp
         )
@@ -482,7 +834,7 @@ private fun PeopleInfoRow(
 private fun LoadingPeopleCard() {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp)
+        shape = RoundedCornerShape(22.dp)
     ) {
         Box(
             modifier = Modifier
@@ -502,8 +854,11 @@ private fun EmptyPeopleCard(
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
+        shape = RoundedCornerShape(22.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        )
     ) {
         Column(
             modifier = Modifier.padding(22.dp)
