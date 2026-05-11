@@ -15,11 +15,7 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.example.smartattend.viewmodel.AdminViewModel
@@ -44,12 +40,18 @@ fun AdminRootScreen(
 ) {
     var selectedTab by remember { mutableStateOf(AdminTab.DASHBOARD) }
 
+    // false = open HR list first
+    // true = open Employee list first
+    var openEmployeesFirst by remember { mutableStateOf(false) }
+
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         bottomBar = {
             AdminBottomBar(
                 selectedTab = selectedTab,
-                onTabSelected = { selectedTab = it }
+                onTabSelected = {
+                    selectedTab = it
+                }
             )
         }
     ) { paddingValues ->
@@ -64,13 +66,25 @@ fun AdminRootScreen(
                 AdminTab.DASHBOARD -> {
                     AdminDashboardScreen(
                         viewModel = viewModel,
-                        onAddHrClick = onAddHrClick
+                        onAddHrClick = onAddHrClick,
+                        onHrListClick = {
+                            openEmployeesFirst = false
+                            selectedTab = AdminTab.HR
+                        },
+                        onEmployeeListClick = {
+                            openEmployeesFirst = true
+                            selectedTab = AdminTab.HR
+                        },
+                        onProfileClick = {
+                            selectedTab = AdminTab.PROFILE
+                        }
                     )
                 }
 
                 AdminTab.HR -> {
                     AdminHrTabScreen(
                         viewModel = viewModel,
+                        startWithEmployees = openEmployeesFirst,
                         onAddHrClick = onAddHrClick
                     )
                 }
