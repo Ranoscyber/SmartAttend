@@ -3,18 +3,21 @@ package com.example.smartattend.ui.navigation
 import androidx.compose.runtime.Composable
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
-import androidx.navigation.compose.*
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import com.example.smartattend.ui.admin.AddHrScreen
 import com.example.smartattend.ui.admin.AdminRootScreen
 import com.example.smartattend.ui.auth.ForgotPasswordScreen
 import com.example.smartattend.ui.auth.LoginScreen
+import com.example.smartattend.ui.auth.SplashScreen
 import com.example.smartattend.ui.employee.EmployeeRootScreen
 import com.example.smartattend.ui.hr.HrRootScreen
 import com.example.smartattend.viewmodel.AdminViewModel
+import com.example.smartattend.viewmodel.AttendanceViewModel
 import com.example.smartattend.viewmodel.AuthViewModel
 import com.example.smartattend.viewmodel.EmployeeViewModel
 import com.example.smartattend.viewmodel.HrViewModel
-import com.example.smartattend.viewmodel.AttendanceViewModel
 
 @Composable
 fun AppNavGraph() {
@@ -24,13 +27,41 @@ fun AppNavGraph() {
     val adminViewModel: AdminViewModel = viewModel()
     val hrViewModel: HrViewModel = viewModel()
     val employeeViewModel: EmployeeViewModel = viewModel()
-
     val attendanceViewModel: AttendanceViewModel = viewModel()
 
     NavHost(
         navController = navController,
-        startDestination = Routes.LOGIN
+        startDestination = Routes.SPLASH
     ) {
+        composable(Routes.SPLASH) {
+            SplashScreen()
+
+            androidx.compose.runtime.LaunchedEffect(Unit) {
+                authViewModel.checkCurrentSession(
+                    onAdmin = {
+                        navController.navigate(Routes.ADMIN_DASHBOARD) {
+                            popUpTo(Routes.SPLASH) { inclusive = true }
+                        }
+                    },
+                    onHr = {
+                        navController.navigate(Routes.HR_DASHBOARD) {
+                            popUpTo(Routes.SPLASH) { inclusive = true }
+                        }
+                    },
+                    onEmployee = {
+                        navController.navigate(Routes.EMPLOYEE_HOME) {
+                            popUpTo(Routes.SPLASH) { inclusive = true }
+                        }
+                    },
+                    onNotLoggedIn = {
+                        navController.navigate(Routes.LOGIN) {
+                            popUpTo(Routes.SPLASH) { inclusive = true }
+                        }
+                    }
+                )
+            }
+        }
+
         composable(Routes.LOGIN) {
             LoginScreen(
                 viewModel = authViewModel,

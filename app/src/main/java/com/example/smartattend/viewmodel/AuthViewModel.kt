@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 
 data class AuthUiState(
     val isLoading: Boolean = false,
@@ -159,5 +160,47 @@ class AuthViewModel(
             errorMessage = null,
             isLoading = false
         )
+    }
+
+    fun checkCurrentSession(
+        onAdmin: () -> Unit,
+        onHr: () -> Unit,
+        onEmployee: () -> Unit,
+        onNotLoggedIn: () -> Unit
+    ) {
+        viewModelScope.launch {
+            val currentUser = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser
+
+            if (currentUser == null) {
+                onNotLoggedIn()
+                return@launch
+            }
+
+            try {
+                val snapshot = com.google.firebase.database.FirebaseDatabase
+                    .getInstance()
+                    .reference
+                    .child("users")
+                    .child(currentUser.uid)
+                    .get()
+                    .await()
+
+                val role = snapshot.child("role").value?.toString()
+
+                when (role) {
+                    "admin" -> onAdmin()
+                    "hr" -> onHr()
+                    "employee" -> onEmployee()
+                    else -> {
+                        com.google.firebase.auth.FirebaseAuth.getInstance().signOut()
+                        onNotLoggedIn()
+                    }
+                }
+
+            } catch (e: Exception) {
+                com.google.firebase.auth.FirebaseAuth.getInstance().signOut()
+                onNotLoggedIn()
+            }
+        }
     }
 }
